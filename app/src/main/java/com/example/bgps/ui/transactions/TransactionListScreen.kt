@@ -36,13 +36,19 @@ import java.util.Locale
 
 @Composable
 fun TransactionListScreen(
+    onOpenSummary: () -> Unit = {},
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactions.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("BGps") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("BGps") },
+                actions = { TextButton(onClick = onOpenSummary) { Text("Tổng hợp") } }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 Text("+", style = MaterialTheme.typography.titleLarge)

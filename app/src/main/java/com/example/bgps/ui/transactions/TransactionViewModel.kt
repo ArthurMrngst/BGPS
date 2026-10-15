@@ -19,8 +19,7 @@ class TransactionViewModel @Inject constructor(
 ) : ViewModel() {
 
     // Room Flow -> StateFlow để Compose đọc được.
-    // WhileSubscribed(5_000): ngừng lắng nghe DB sau 5 giây khi không còn UI nào quan sát
-    // (ví dụ xoay màn hình thì không query lại, nhưng thoát app thì dừng để tiết kiệm tài nguyên).
+    // WhileSubscribed(5_000): ngừng lắng nghe DB sau 5 giây khi không còn UI quan sát.
     val transactions: StateFlow<List<TransactionEntity>> =
         repository.observeTransactions()
             .stateIn(
@@ -35,9 +34,9 @@ class TransactionViewModel @Inject constructor(
         category: String,
         note: String?
     ) {
-        // Ghi DB là việc nặng nên chạy trong coroutine, không chặn UI
         viewModelScope.launch {
-            repository.add(
+            // id (UUID), updatedAt, isDeleted, isDirty đã có giá trị mặc định trong Entity
+            repository.save(
                 TransactionEntity(
                     amount = amount,
                     type = type,

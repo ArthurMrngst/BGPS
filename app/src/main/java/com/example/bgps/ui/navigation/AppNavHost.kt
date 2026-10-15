@@ -1,4 +1,29 @@
 package com.example.bgps.ui.navigation
 
-class AppNavHost {
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.bgps.ui.summary.SummaryScreen
+import com.example.bgps.ui.transactions.TransactionListScreen
+
+object Routes {
+    const val TRANSACTIONS = "transactions"
+    const val SUMMARY = "summary"
+}
+
+@Composable
+fun AppNavHost() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = Routes.TRANSACTIONS) {
+        composable(Routes.TRANSACTIONS) {
+            TransactionListScreen(
+                onOpenSummary = { navController.navigate(Routes.SUMMARY) }
+            )
+        }
+        composable(Routes.SUMMARY) {
+            SummaryScreen(onBack = { navController.popBackStack() })
+        }
+    }
 }

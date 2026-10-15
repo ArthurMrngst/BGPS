@@ -13,7 +13,18 @@ class TransactionRepository @Inject constructor(
 ) {
     fun observeTransactions(): Flow<List<TransactionEntity>> = dao.observeAll()
 
-    suspend fun add(transaction: TransactionEntity): Long = dao.insert(transaction)
+    // Dùng cho cả thêm mới và sửa. Repository tự gắn updatedAt/isDirty
+    // để phía UI không thể quên.
+    suspend fun save(transaction: TransactionEntity) {
+        dao.upsert(
+            transaction.copy(
+                updatedAt = System.currentTimeMillis(),
+                isDirty = true
+            )
+        )
+    }
 
-    suspend fun delete(transaction: TransactionEntity) = dao.delete(transaction)
+    suspend fun delete(transaction: TransactionEntity) {
+        dao.softDelete(transaction.id, System.currentTimeMillis())
+    }
 }
