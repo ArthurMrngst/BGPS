@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +40,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.example.bgps.data.database.TransactionEntity
 import com.example.bgps.data.database.TransactionType
 import com.example.bgps.notification.isNotificationAccessGranted
+import com.example.bgps.ui.theme.ExpenseOrange
+import com.example.bgps.ui.theme.IncomeBlue
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,13 +49,11 @@ import java.util.Locale
 
 @Composable
 fun TransactionListScreen(
-    onOpenSummary: () -> Unit = {},
     onEditTransaction: (String) -> Unit = {},
     onOpenNotificationAccess: () -> Unit = {},
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactions.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -71,15 +70,7 @@ fun TransactionListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("BGps") },
-                actions = { TextButton(onClick = onOpenSummary) { Text("Tổng hợp") } }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
-                Text("+", style = MaterialTheme.typography.titleLarge)
-            }
+            TopAppBar(title = { Text("BGps") })
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -107,16 +98,6 @@ fun TransactionListScreen(
             }
         }
     }
-
-    if (showAddDialog) {
-        AddTransactionDialog(
-            onDismiss = { showAddDialog = false },
-            onConfirm = { amount, type, category, merchant, note ->
-                viewModel.addTransaction(amount, type, category, merchant, note)
-                showAddDialog = false
-            }
-        )
-    }
 }
 
 @Composable
@@ -143,8 +124,7 @@ private fun TransactionRow(
 ) {
     val isExpense = transaction.type == TransactionType.EXPENSE
     val sign = if (isExpense) "-" else "+"
-    val amountColor =
-        if (isExpense) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val amountColor = if (isExpense) ExpenseOrange else IncomeBlue
 
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
