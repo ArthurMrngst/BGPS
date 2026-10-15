@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bgps.ui.notifications.NotificationAccessScreen
 import com.example.bgps.ui.summary.SummaryScreen
 import com.example.bgps.ui.transactions.EditTransactionScreen
 import com.example.bgps.ui.transactions.TransactionListScreen
@@ -14,6 +15,7 @@ object Routes {
     const val TRANSACTIONS = "transactions"
     const val SUMMARY = "summary"
     const val EDIT_TRANSACTION = "editTransaction/{transactionId}"
+    const val NOTIFICATION_ACCESS = "notificationAccess"
 
     fun editTransaction(transactionId: String) = "editTransaction/$transactionId"
 }
@@ -26,11 +28,15 @@ fun AppNavHost() {
         composable(Routes.TRANSACTIONS) {
             TransactionListScreen(
                 onOpenSummary = { navController.navigate(Routes.SUMMARY) },
-                onEditTransaction = { id -> navController.navigate(Routes.editTransaction(id)) }
+                onEditTransaction = { id -> navController.navigate(Routes.editTransaction(id)) },
+                onOpenNotificationAccess = { navController.navigate(Routes.NOTIFICATION_ACCESS) }
             )
         }
         composable(Routes.SUMMARY) {
             SummaryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.NOTIFICATION_ACCESS) {
+            NotificationAccessScreen(onBack = { navController.popBackStack() })
         }
         composable(
             route = Routes.EDIT_TRANSACTION,
