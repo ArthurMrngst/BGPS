@@ -32,6 +32,7 @@ class TransactionViewModel @Inject constructor(
         amount: Long,
         type: TransactionType,
         category: String,
+        merchant: String?,
         note: String?
     ) {
         viewModelScope.launch {
@@ -41,6 +42,7 @@ class TransactionViewModel @Inject constructor(
                     amount = amount,
                     type = type,
                     category = category,
+                    merchant = merchant,
                     note = note?.takeIf { it.isNotBlank() },
                     source = TransactionSource.MANUAL,
                     timestamp = System.currentTimeMillis()

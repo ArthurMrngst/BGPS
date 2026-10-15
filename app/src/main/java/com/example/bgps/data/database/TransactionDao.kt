@@ -12,6 +12,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE isDeleted = 0 ORDER BY timestamp DESC")
     fun observeAll(): Flow<List<TransactionEntity>>
 
+    // Dùng để mở màn sửa giao dịch theo id lấy từ danh sách
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransactionEntity?
+
     // Upsert: chưa có id thì thêm, có rồi thì cập nhật -> dùng chung cho "thêm" và "sửa"
     @Upsert
     suspend fun upsert(transaction: TransactionEntity)

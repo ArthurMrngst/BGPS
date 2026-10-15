@@ -2,6 +2,7 @@
 
 package com.example.bgps.ui.transactions
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,7 @@ import java.util.Locale
 @Composable
 fun TransactionListScreen(
     onOpenSummary: () -> Unit = {},
+    onEditTransaction: (String) -> Unit = {},
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactions.collectAsState()
@@ -67,6 +69,7 @@ fun TransactionListScreen(
                 items(transactions, key = { it.id }) { tx ->
                     TransactionRow(
                         transaction = tx,
+                        onClick = { onEditTransaction(tx.id) },
                         onDelete = { viewModel.deleteTransaction(tx) }
                     )
                     HorizontalDivider()
@@ -78,8 +81,8 @@ fun TransactionListScreen(
     if (showAddDialog) {
         AddTransactionDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { amount, type, category, note ->
-                viewModel.addTransaction(amount, type, category, note)
+            onConfirm = { amount, type, category, merchant, note ->
+                viewModel.addTransaction(amount, type, category, merchant, note)
                 showAddDialog = false
             }
         )
@@ -89,6 +92,7 @@ fun TransactionListScreen(
 @Composable
 private fun TransactionRow(
     transaction: TransactionEntity,
+    onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val isExpense = transaction.type == TransactionType.EXPENSE
@@ -97,6 +101,7 @@ private fun TransactionRow(
         if (isExpense) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
 
     ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(transaction.category) },
         supportingContent = {
             Text(
