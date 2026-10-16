@@ -39,6 +39,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.bgps.data.database.TransactionEntity
 import com.example.bgps.data.database.TransactionType
+import com.example.bgps.notification.isIgnoringBatteryOptimizations
 import com.example.bgps.notification.isNotificationAccessGranted
 import com.example.bgps.ui.theme.ExpenseOrange
 import com.example.bgps.ui.theme.IncomeBlue
@@ -58,10 +59,12 @@ fun TransactionListScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var notificationAccessGranted by remember { mutableStateOf(isNotificationAccessGranted(context)) }
+    var batteryExempt by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 notificationAccessGranted = isNotificationAccessGranted(context)
+                batteryExempt = isIgnoringBatteryOptimizations(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -74,8 +77,11 @@ fun TransactionListScreen(
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            if (!notificationAccessGranted) {
-                NotificationAccessBanner(onClick = onOpenNotificationAccess)
+            if (!notificationAccessGranted || !batteryExempt) {
+                NotificationAccessBanner(
+                    batteryStepNeeded = notificationAccessGranted && !batteryExempt,
+                    onClick = onOpenNotificationAccess
+                )
             }
             if (transactions.isEmpty()) {
                 Box(
@@ -101,7 +107,7 @@ fun TransactionListScreen(
 }
 
 @Composable
-private fun NotificationAccessBanner(onClick: () -> Unit) {
+private fun NotificationAccessBanner(batteryStepNeeded: Boolean, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -109,7 +115,12 @@ private fun NotificationAccessBanner(onClick: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Tự động ghi giao dịch từ ngân hàng", style = MaterialTheme.typography.titleSmall)
             Text(
-                "Bật đọc thông báo để BGps tự nhận giao dịch từ app ngân hàng/ví đã kết nối.",
+                if (batteryStepNeeded) {
+                    "Đã bật đọc thông báo, nhưng máy có thể tự tắt app khi tắt màn " +
+                        "hình. Bấm vào đây để bỏ qua tối ưu hoá pin cho BGps."
+                } else {
+                    "Bật đọc thông báo để BGps tự nhận giao dịch từ app ngân hàng/ví đã kết nối."
+                },
                 style = MaterialTheme.typography.bodyMedium
             )
         }
