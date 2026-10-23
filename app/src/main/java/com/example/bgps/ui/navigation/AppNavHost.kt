@@ -1,5 +1,6 @@
 package com.example.bgps.ui.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -16,6 +17,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bgps.ui.notifications.NotificationAccessScreen
+import com.example.bgps.ui.receipt.ReceiptCaptureScreen
+import com.example.bgps.ui.receipt.ReceiptConfirmScreen
 import com.example.bgps.ui.summary.SummaryScreen
 import com.example.bgps.ui.transactions.AddTransactionDialog
 import com.example.bgps.ui.transactions.EditTransactionScreen
@@ -27,8 +30,11 @@ object Routes {
     const val SUMMARY = "summary"
     const val EDIT_TRANSACTION = "editTransaction/{transactionId}"
     const val NOTIFICATION_ACCESS = "notificationAccess"
+    const val RECEIPT_CAPTURE = "receiptCapture"
+    const val RECEIPT_CONFIRM = "receiptConfirm/{imageUri}"
 
     fun editTransaction(transactionId: String) = "editTransaction/$transactionId"
+    fun receiptConfirm(imageUri: String) = "receiptConfirm/${Uri.encode(imageUri)}"
 }
 
 // Các tab có thanh điều hướng dưới; Sửa giao dịch và Cấp quyền thông báo là
@@ -92,6 +98,22 @@ fun AppNavHost() {
             ) {
                 EditTransactionScreen(onDone = { navController.popBackStack() })
             }
+            composable(Routes.RECEIPT_CAPTURE) {
+                ReceiptCaptureScreen(
+                    onBack = { navController.popBackStack() },
+                    onImageCaptured = { uri ->
+                        navController.navigate(Routes.receiptConfirm(uri.toString())) {
+                            popUpTo(Routes.RECEIPT_CAPTURE) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            composable(
+                route = Routes.RECEIPT_CONFIRM,
+                arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
+            ) {
+                ReceiptConfirmScreen(onDone = { navController.popBackStack() })
+            }
         }
     }
 
@@ -101,6 +123,10 @@ fun AppNavHost() {
             onConfirm = { amount, type, category, merchant, note ->
                 transactionViewModel.addTransaction(amount, type, category, merchant, note)
                 showAddDialog = false
+            },
+            onScanReceipt = {
+                showAddDialog = false
+                navController.navigate(Routes.RECEIPT_CAPTURE)
             }
         )
     }

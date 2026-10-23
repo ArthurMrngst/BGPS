@@ -81,23 +81,34 @@ fun TransactionFormFields(state: TransactionFormState) {
             singleLine = true
         )
         Text("Danh mục")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Category.entries.forEach { c ->
-                FilterChip(
-                    selected = state.category == c,
-                    onClick = {
-                        state.category = c
-                        state.categoryManuallySet = true
-                    },
-                    label = { Text(c.displayName) }
-                )
+        CategoryChipGrid(
+            selected = state.category,
+            onSelect = {
+                state.category = it
+                state.categoryManuallySet = true
             }
-        }
+        )
         OutlinedTextField(
             value = state.noteText,
             onValueChange = { state.noteText = it },
             label = { Text("Ghi chú (tuỳ chọn)") },
             singleLine = true
         )
+    }
+}
+
+// Tách riêng để màn xác nhận hoá đơn (ReceiptConfirmScreen) dùng lại được,
+// không phải chép lại lưới 11 chip danh mục.
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun CategoryChipGrid(selected: Category, onSelect: (Category) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Category.entries.forEach { c ->
+            FilterChip(
+                selected = selected == c,
+                onClick = { onSelect(c) },
+                label = { Text(c.displayName) }
+            )
+        }
     }
 }
