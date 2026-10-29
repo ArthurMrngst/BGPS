@@ -1,9 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
 }
+
+// Đọc MAPS_API_KEY từ local.properties (file này không commit lên git, xem
+// hướng dẫn lấy key ở tin nhắn/README). Để trống thì app vẫn build được,
+// chỉ là bản đồ không hiển thị được gì cho tới khi có key thật.
+val mapsApiKey: String = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}.getProperty("MAPS_API_KEY", "")
 
 android {
     namespace = "com.example.bgps"
@@ -19,6 +31,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -78,6 +92,10 @@ dependencies {
 
     // Location & Activity Recognition
     implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // Maps (hiển thị đường đi hành trình + vị trí giao dịch)
+    implementation("com.google.android.gms:play-services-maps:20.1.0")
+    implementation("com.google.maps.android:maps-compose:6.4.1")
 
     // CameraX
     implementation("androidx.camera:camera-camera2:1.6.2")

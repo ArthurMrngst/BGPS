@@ -48,6 +48,7 @@ import java.util.Locale
 @Composable
 fun TripListScreen(
     onOpenLocationAccess: () -> Unit,
+    onOpenTripDetail: (String) -> Unit = {},
     viewModel: TripViewModel = hiltViewModel()
 ) {
     val trips by viewModel.trips.collectAsState()
@@ -107,7 +108,9 @@ fun TripListScreen(
                 }
             } else {
                 LazyColumn {
-                    items(trips, key = { it.id }) { TripRow(it) }
+                    items(trips, key = { it.id }) { trip ->
+                        TripRow(trip, onClick = { onOpenTripDetail(trip.id) })
+                    }
                 }
             }
         }
@@ -115,11 +118,14 @@ fun TripListScreen(
 }
 
 @Composable
-private fun TripRow(trip: TripEntity) {
+private fun TripRow(trip: TripEntity, onClick: () -> Unit) {
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     val km = trip.distanceMeters / 1000.0
 
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(vehicleLabel(trip.vehicleType), style = MaterialTheme.typography.titleSmall)
@@ -130,7 +136,7 @@ private fun TripRow(trip: TripEntity) {
     }
 }
 
-private fun vehicleLabel(type: VehicleType): String = when (type) {
+fun vehicleLabel(type: VehicleType): String = when (type) {
     VehicleType.WALKING -> "Đi bộ"
     VehicleType.CYCLING -> "Xe đạp"
     VehicleType.VEHICLE -> "Xe cơ giới"

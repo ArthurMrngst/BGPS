@@ -9,8 +9,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,6 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun EditTransactionScreen(
@@ -66,6 +77,7 @@ fun EditTransactionScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
+                        .verticalScroll(rememberScrollState())
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -73,13 +85,24 @@ fun EditTransactionScreen(
                     val lat = currentTransaction.latitude
                     val lng = currentTransaction.longitude
                     if (lat != null && lng != null) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Vị trí (ước tính từ hành trình gần nhất): %.5f, %.5f".format(lat, lng))
+                        val paymentLocation = LatLng(lat, lng)
+                        val cameraPositionState = rememberCameraPositionState {
+                            position = CameraPosition.fromLatLngZoom(paymentLocation, 16f)
+                        }
+                        Text(
+                            "Vị trí lúc thanh toán (ước tính từ hành trình gần nhất)",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        GoogleMap(
+                            modifier = Modifier.fillMaxWidth().height(180.dp),
+                            cameraPositionState = cameraPositionState
+                        ) {
+                            Marker(state = MarkerState(position = paymentLocation), title = "Đã thanh toán ở đây")
                         }
                         TextButton(onClick = {
                             val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng")
                             context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                        }) { Text("Mở bản đồ") }
+                        }) { Text("Mở bản đồ ngoài") }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(

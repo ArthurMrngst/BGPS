@@ -25,3 +25,24 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         )
     }
 }
+
+// Thêm bảng trip_points để lưu lại toàn bộ đường đi (trước đó chỉ lưu điểm
+// đầu/cuối) — cần để vẽ Polyline ở màn chi tiết hành trình.
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS trip_points (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tripId TEXT NOT NULL,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                timestampMillis INTEGER NOT NULL,
+                sequence INTEGER NOT NULL,
+                FOREIGN KEY(tripId) REFERENCES trips(id) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_trip_points_tripId ON trip_points(tripId)")
+    }
+}

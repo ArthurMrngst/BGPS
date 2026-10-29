@@ -25,6 +25,7 @@ import com.example.bgps.ui.transactions.AddTransactionDialog
 import com.example.bgps.ui.transactions.EditTransactionScreen
 import com.example.bgps.ui.transactions.TransactionListScreen
 import com.example.bgps.ui.transactions.TransactionViewModel
+import com.example.bgps.ui.trips.TripDetailScreen
 import com.example.bgps.ui.trips.TripListScreen
 
 object Routes {
@@ -36,9 +37,11 @@ object Routes {
     const val RECEIPT_CONFIRM = "receiptConfirm/{imageUri}"
     const val TRIPS = "trips"
     const val LOCATION_ACCESS = "locationAccess"
+    const val TRIP_DETAIL = "tripDetail/{tripId}"
 
     fun editTransaction(transactionId: String) = "editTransaction/$transactionId"
     fun receiptConfirm(imageUri: String) = "receiptConfirm/${Uri.encode(imageUri)}"
+    fun tripDetail(tripId: String) = "tripDetail/$tripId"
 }
 
 // Các tab có thanh điều hướng dưới; Sửa giao dịch và Cấp quyền thông báo là
@@ -120,10 +123,19 @@ fun AppNavHost() {
                 ReceiptConfirmScreen(onDone = { navController.popBackStack() })
             }
             composable(Routes.TRIPS) {
-                TripListScreen(onOpenLocationAccess = { navController.navigate(Routes.LOCATION_ACCESS) })
+                TripListScreen(
+                    onOpenLocationAccess = { navController.navigate(Routes.LOCATION_ACCESS) },
+                    onOpenTripDetail = { tripId -> navController.navigate(Routes.tripDetail(tripId)) }
+                )
             }
             composable(Routes.LOCATION_ACCESS) {
                 LocationAccessScreen(onBack = { navController.popBackStack() })
+            }
+            composable(
+                route = Routes.TRIP_DETAIL,
+                arguments = listOf(navArgument("tripId") { type = NavType.StringType })
+            ) {
+                TripDetailScreen(onBack = { navController.popBackStack() })
             }
         }
     }

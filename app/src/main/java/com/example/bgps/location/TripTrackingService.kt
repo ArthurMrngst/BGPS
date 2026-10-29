@@ -11,6 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.bgps.MainActivity
 import com.example.bgps.data.database.TripEntity
+import com.example.bgps.data.database.TripPointEntity
 import com.example.bgps.data.database.VehicleType
 import com.example.bgps.data.repository.TripRepository
 import com.example.bgps.domain.trip.TripCalculator
@@ -126,18 +127,28 @@ class TripTrackingService : Service() {
         scope.launch {
             if (snapshot.size >= 2) {
                 val summary = TripCalculator.summarize(snapshot, activityHint)
-                tripRepository.save(
-                    TripEntity(
-                        startTime = snapshot.first().timestampMillis,
-                        endTime = snapshot.last().timestampMillis,
-                        distanceMeters = summary.distanceMeters,
-                        vehicleType = summary.vehicleType,
-                        startLatitude = snapshot.first().latitude,
-                        startLongitude = snapshot.first().longitude,
-                        endLatitude = snapshot.last().latitude,
-                        endLongitude = snapshot.last().longitude
-                    )
+                val trip = TripEntity(
+                    startTime = snapshot.first().timestampMillis,
+                    endTime = snapshot.last().timestampMillis,
+                    distanceMeters = summary.distanceMeters,
+                    vehicleType = summary.vehicleType,
+                    startLatitude = snapshot.first().latitude,
+                    startLongitude = snapshot.first().longitude,
+                    endLatitude = snapshot.last().latitude,
+                    endLongitude = snapshot.last().longitude
                 )
+                // Lưu cả đường đi (không chỉ điểm đầu/cuối) để vẽ lại được
+                // trên bản đồ ở màn chi tiết hành trình.
+                val pointEntities = snapshot.mapIndexed { index, point ->
+                    TripPointEntity(
+                        tripId = trip.id,
+                        latitude = point.latitude,
+                        longitude = point.longitude,
+                        timestampMillis = point.timestampMillis,
+                        sequence = index
+                    )
+                }
+                tripRepository.saveWithPoints(trip, pointEntities)
             }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
