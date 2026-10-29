@@ -29,12 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.example.bgps.ui.common.OsmMapView
+import org.osmdroid.util.GeoPoint
 
 @Composable
 fun EditTransactionScreen(
@@ -85,20 +81,16 @@ fun EditTransactionScreen(
                     val lat = currentTransaction.latitude
                     val lng = currentTransaction.longitude
                     if (lat != null && lng != null) {
-                        val paymentLocation = LatLng(lat, lng)
-                        val cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(paymentLocation, 16f)
-                        }
+                        val paymentLocation = GeoPoint(lat, lng)
                         Text(
                             "Vị trí lúc thanh toán (ước tính từ hành trình gần nhất)",
                             style = MaterialTheme.typography.labelMedium
                         )
-                        GoogleMap(
+                        OsmMapView(
                             modifier = Modifier.fillMaxWidth().height(180.dp),
-                            cameraPositionState = cameraPositionState
-                        ) {
-                            Marker(state = MarkerState(position = paymentLocation), title = "Đã thanh toán ở đây")
-                        }
+                            center = paymentLocation,
+                            markers = listOf(paymentLocation to "Đã thanh toán ở đây")
+                        )
                         TextButton(onClick = {
                             val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng")
                             context.startActivity(Intent(Intent.ACTION_VIEW, uri))

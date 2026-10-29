@@ -20,17 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.example.bgps.ui.common.OsmMapView
+import org.osmdroid.util.GeoPoint
 
 // Toạ độ trung tâm Hà Nội — chỉ dùng làm vị trí camera mặc định khi chưa có
 // điểm GPS nào (không nên xảy ra với hành trình hợp lệ, nhưng tránh crash).
-private val DEFAULT_CENTER = LatLng(21.0285, 105.8542)
+private val DEFAULT_CENTER = GeoPoint(21.0285, 105.8542)
 
 @Composable
 fun TripDetailScreen(
@@ -62,29 +57,18 @@ fun TripDetailScreen(
             ) { Text("Không tìm thấy hành trình") }
 
             else -> {
-                val latLngPoints = points.map { LatLng(it.latitude, it.longitude) }
-                val cameraPositionState = rememberCameraPositionState {
-                    position = CameraPosition.fromLatLngZoom(
-                        latLngPoints.firstOrNull() ?: DEFAULT_CENTER,
-                        16f
-                    )
-                }
+                val geoPoints = points.map { GeoPoint(it.latitude, it.longitude) }
 
                 Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                    GoogleMap(
+                    OsmMapView(
                         modifier = Modifier.fillMaxWidth().weight(1f),
-                        cameraPositionState = cameraPositionState
-                    ) {
-                        if (latLngPoints.size >= 2) {
-                            Polyline(points = latLngPoints, color = MaterialTheme.colorScheme.primary)
+                        center = geoPoints.firstOrNull() ?: DEFAULT_CENTER,
+                        routePoints = geoPoints,
+                        markers = buildList {
+                            geoPoints.firstOrNull()?.let { add(it to "Bắt đầu") }
+                            if (geoPoints.size >= 2) add(geoPoints.last() to "Kết thúc")
                         }
-                        latLngPoints.firstOrNull()?.let {
-                            Marker(state = MarkerState(position = it), title = "Bắt đầu")
-                        }
-                        if (latLngPoints.size >= 2) {
-                            Marker(state = MarkerState(position = latLngPoints.last()), title = "Kết thúc")
-                        }
-                    }
+                    )
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             vehicleLabel(currentTrip.vehicleType),
@@ -94,7 +78,7 @@ fun TripDetailScreen(
                             "${"%.2f".format(currentTrip.distanceMeters / 1000.0)} km (ước tính)",
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        if (latLngPoints.isEmpty()) {
+                        if (geoPoints.isEmpty()) {
                             Text(
                                 "Không có dữ liệu đường đi chi tiết cho hành trình này.",
                                 style = MaterialTheme.typography.bodySmall
