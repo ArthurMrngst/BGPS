@@ -6,7 +6,8 @@ package com.example.bgps.domain.parsing
 object NotificationParsers {
     private val all: List<BankNotificationParser> = listOf(
         VietcombankNotificationParser,
-        MomoNotificationParser
+        MomoNotificationParser,
+        LiobankNotificationParser
     )
 
     val whitelistedPackages: Set<String> = all.map { it.packageName }.toSet()
