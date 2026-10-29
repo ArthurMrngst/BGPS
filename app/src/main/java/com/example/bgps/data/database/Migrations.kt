@@ -33,7 +33,7 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS trip_points (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 tripId TEXT NOT NULL,
                 latitude REAL NOT NULL,
                 longitude REAL NOT NULL,
