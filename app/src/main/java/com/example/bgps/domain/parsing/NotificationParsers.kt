@@ -7,7 +7,8 @@ object NotificationParsers {
     private val all: List<BankNotificationParser> = listOf(
         VietcombankNotificationParser,
         MomoNotificationParser,
-        LiobankNotificationParser
+        LiobankNotificationParser,
+        TechcombankNotificationParser
     )
 
     val whitelistedPackages: Set<String> = all.map { it.packageName }.toSet()
