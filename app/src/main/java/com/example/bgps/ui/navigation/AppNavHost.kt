@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bgps.ui.location.LocationAccessScreen
 import com.example.bgps.ui.notifications.NotificationAccessScreen
 import com.example.bgps.ui.receipt.ReceiptCaptureScreen
 import com.example.bgps.ui.receipt.ReceiptConfirmScreen
@@ -24,6 +25,7 @@ import com.example.bgps.ui.transactions.AddTransactionDialog
 import com.example.bgps.ui.transactions.EditTransactionScreen
 import com.example.bgps.ui.transactions.TransactionListScreen
 import com.example.bgps.ui.transactions.TransactionViewModel
+import com.example.bgps.ui.trips.TripListScreen
 
 object Routes {
     const val TRANSACTIONS = "transactions"
@@ -32,6 +34,8 @@ object Routes {
     const val NOTIFICATION_ACCESS = "notificationAccess"
     const val RECEIPT_CAPTURE = "receiptCapture"
     const val RECEIPT_CONFIRM = "receiptConfirm/{imageUri}"
+    const val TRIPS = "trips"
+    const val LOCATION_ACCESS = "locationAccess"
 
     fun editTransaction(transactionId: String) = "editTransaction/$transactionId"
     fun receiptConfirm(imageUri: String) = "receiptConfirm/${Uri.encode(imageUri)}"
@@ -83,7 +87,8 @@ fun AppNavHost() {
             composable(Routes.TRANSACTIONS) {
                 TransactionListScreen(
                     onEditTransaction = { id -> navController.navigate(Routes.editTransaction(id)) },
-                    onOpenNotificationAccess = { navController.navigate(Routes.NOTIFICATION_ACCESS) }
+                    onOpenNotificationAccess = { navController.navigate(Routes.NOTIFICATION_ACCESS) },
+                    onOpenTrips = { navController.navigate(Routes.TRIPS) }
                 )
             }
             composable(Routes.SUMMARY) {
@@ -113,6 +118,12 @@ fun AppNavHost() {
                 arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
             ) {
                 ReceiptConfirmScreen(onDone = { navController.popBackStack() })
+            }
+            composable(Routes.TRIPS) {
+                TripListScreen(onOpenLocationAccess = { navController.navigate(Routes.LOCATION_ACCESS) })
+            }
+            composable(Routes.LOCATION_ACCESS) {
+                LocationAccessScreen(onBack = { navController.popBackStack() })
             }
         }
     }

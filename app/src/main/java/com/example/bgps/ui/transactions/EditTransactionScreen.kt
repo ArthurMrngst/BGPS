@@ -2,6 +2,8 @@
 
 package com.example.bgps.ui.transactions
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -58,6 +61,7 @@ fun EditTransactionScreen(
 
             else -> {
                 val state = rememberTransactionFormState(currentTransaction)
+                val context = LocalContext.current
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -66,6 +70,17 @@ fun EditTransactionScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     TransactionFormFields(state)
+                    val lat = currentTransaction.latitude
+                    val lng = currentTransaction.longitude
+                    if (lat != null && lng != null) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Vị trí (ước tính từ hành trình gần nhất): %.5f, %.5f".format(lat, lng))
+                        }
+                        TextButton(onClick = {
+                            val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng")
+                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        }) { Text("Mở bản đồ") }
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(
                             enabled = state.canSave,

@@ -52,6 +52,7 @@ import java.util.Locale
 fun TransactionListScreen(
     onEditTransaction: (String) -> Unit = {},
     onOpenNotificationAccess: () -> Unit = {},
+    onOpenTrips: () -> Unit = {},
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactions.collectAsState()
@@ -73,7 +74,10 @@ fun TransactionListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("BGps") })
+            TopAppBar(
+                title = { Text("BGps") },
+                actions = { TextButton(onClick = onOpenTrips) { Text("Hành trình") } }
+            )
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
