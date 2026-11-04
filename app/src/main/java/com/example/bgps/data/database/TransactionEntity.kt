@@ -24,6 +24,14 @@ data class TransactionEntity(
     val latitude: Double? = null,
     val longitude: Double? = null,
 
+    // Mã tham chiếu giao dịch đọc được từ thông báo ngân hàng (nếu có) — dùng
+    // để chống lưu trùng khi cùng một thông báo được bắn 2 lần. Hiện chưa có
+    // parser nào trích xuất được mã thật (mẫu thật bắt được của Liobank/
+    // Techcombank chỉ có số tài khoản, không có mã giao dịch riêng), nên cột
+    // này gần như luôn null — khi đó repository tự dùng heuristic dự phòng
+    // (cùng nguồn + số tiền + loại + trong khoảng thời gian ngắn) thay thế.
+    val transactionRef: String? = null,
+
     // --- Các cột phục vụ đồng bộ ---
     val updatedAt: Long = System.currentTimeMillis(), // lần sửa gần nhất, để biết bản nào mới hơn
     val isDeleted: Boolean = false,   // xoá mềm: giữ dòng lại để máy khác biết giao dịch đã bị xoá

@@ -46,3 +46,35 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_trip_points_tripId ON trip_points(tripId)")
     }
 }
+
+// Thêm cột fuelVehicleType để người dùng chọn thủ công xe máy/ô tô lúc bắt
+// đầu hành trình, phục vụ tính tiền xăng ước tính — cột nullable nên không
+// cần giá trị mặc định, các hành trình cũ giữ nguyên NULL (không tính xăng).
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE trips ADD COLUMN fuelVehicleType TEXT")
+    }
+}
+
+// Thêm cột transactionRef để chống lưu trùng giao dịch từ thông báo ngân
+// hàng (xem TransactionEntity.transactionRef) — cột nullable nên giao dịch
+// cũ giữ nguyên NULL, không ảnh hưởng dữ liệu đã có.
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE transactions ADD COLUMN transactionRef TEXT")
+    }
+}
+
+// Thêm bảng budgets (D1) — ngân sách hàng tháng theo danh mục.
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS budgets (
+                category TEXT NOT NULL PRIMARY KEY,
+                monthlyLimit INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}

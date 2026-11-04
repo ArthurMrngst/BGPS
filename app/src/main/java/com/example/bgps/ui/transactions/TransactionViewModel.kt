@@ -6,6 +6,7 @@ import com.example.bgps.data.database.TransactionEntity
 import com.example.bgps.data.database.TransactionSource
 import com.example.bgps.data.database.TransactionType
 import com.example.bgps.data.repository.TransactionRepository
+import com.example.bgps.location.CurrentLocationProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val currentLocationProvider: CurrentLocationProvider
 ) : ViewModel() {
 
     // Room Flow -> StateFlow để Compose đọc được.
@@ -36,6 +38,7 @@ class TransactionViewModel @Inject constructor(
         note: String?
     ) {
         viewModelScope.launch {
+            val location = currentLocationProvider.getLastLocation()
             // id (UUID), updatedAt, isDeleted, isDirty đã có giá trị mặc định trong Entity
             repository.save(
                 TransactionEntity(
@@ -45,7 +48,9 @@ class TransactionViewModel @Inject constructor(
                     merchant = merchant,
                     note = note?.takeIf { it.isNotBlank() },
                     source = TransactionSource.MANUAL,
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    latitude = location?.first,
+                    longitude = location?.second
                 )
             )
         }

@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.bgps.MainActivity
+import com.example.bgps.data.database.FuelVehicleType
 import com.example.bgps.data.database.TripEntity
 import com.example.bgps.data.database.TripPointEntity
 import com.example.bgps.data.database.VehicleType
@@ -44,16 +45,20 @@ class TripTrackingService : Service() {
     @Inject lateinit var tripRepository: TripRepository
     @Inject lateinit var lastKnownLocationStore: LastKnownLocationStore
     @Inject lateinit var activitySampler: TripActivitySampler
+    @Inject lateinit var liveTripTracker: LiveTripTracker
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val points = mutableListOf<TripPoint>()
     private var activityPendingIntent: PendingIntent? = null
+    private var fuelVehicleType: FuelVehicleType? = null
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val location = result.lastLocation ?: return
-            points.add(TripPoint(location.latitude, location.longitude, System.currentTimeMillis()))
+            val point = TripPoint(location.latitude, location.longitude, System.currentTimeMillis())
+            points.add(point)
+            liveTripTracker.addPoint(point)
             lastKnownLocationStore.save(location.latitude, location.longitude)
             updateNotification()
         }
@@ -68,14 +73,18 @@ class TripTrackingService : Service() {
         if (intent?.action == ACTION_STOP) {
             stopTracking()
         } else {
-            startTracking()
+            val fuelType = intent?.getStringExtra(EXTRA_FUEL_VEHICLE_TYPE)
+                ?.let { runCatching { FuelVehicleType.valueOf(it) }.getOrNull() }
+            startTracking(fuelType)
         }
         return START_STICKY
     }
 
-    private fun startTracking() {
+    private fun startTracking(fuelType: FuelVehicleType?) {
         points.clear()
         activitySampler.drain()
+        fuelVehicleType = fuelType
+        liveTripTracker.start(fuelType)
         ensureChannel()
         startForeground(NOTIFICATION_ID, buildNotification(0.0))
         startLocationUpdates()
@@ -121,6 +130,7 @@ class TripTrackingService : Service() {
     private fun stopTracking() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         activityPendingIntent?.let { ActivityRecognition.getClient(this).removeActivityUpdates(it) }
+        liveTripTracker.stop()
 
         val snapshot = points.toList()
         val activityHint = dominantVehicleType(activitySampler.drain())
@@ -135,7 +145,8 @@ class TripTrackingService : Service() {
                     startLatitude = snapshot.first().latitude,
                     startLongitude = snapshot.first().longitude,
                     endLatitude = snapshot.last().latitude,
-                    endLongitude = snapshot.last().longitude
+                    endLongitude = snapshot.last().longitude,
+                    fuelVehicleType = fuelVehicleType
                 )
                 // Lưu cả đường đi (không chỉ điểm đầu/cuối) để vẽ lại được
                 // trên bản đồ ở màn chi tiết hành trình.
@@ -208,6 +219,7 @@ class TripTrackingService : Service() {
 
     companion object {
         const val ACTION_STOP = "com.example.bgps.action.STOP_TRIP"
+        const val EXTRA_FUEL_VEHICLE_TYPE = "com.example.bgps.extra.FUEL_VEHICLE_TYPE"
         private const val NOTIFICATION_ID = 42
         private const val CHANNEL_ID = "trip_tracking"
         private const val SAMPLE_INTERVAL_MS = 15_000L

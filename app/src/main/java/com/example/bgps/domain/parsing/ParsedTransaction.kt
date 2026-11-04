@@ -9,5 +9,9 @@ data class ParsedTransaction(
     val amount: Long,
     val type: TransactionType,
     val merchant: String?,
-    val timestamp: Long?
+    val timestamp: Long?,
+    // Mã tham chiếu riêng cho giao dịch này, nếu bank đó in ra trong thông
+    // báo (null nếu không có hoặc parser chưa trích xuất được) — dùng để
+    // chống lưu trùng, xem TransactionEntity.transactionRef.
+    val transactionRef: String? = null
 )

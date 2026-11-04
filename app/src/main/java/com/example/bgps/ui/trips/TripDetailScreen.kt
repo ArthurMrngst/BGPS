@@ -20,8 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.bgps.domain.trip.FuelCostCalculator
 import com.example.bgps.ui.common.OsmMapView
 import org.osmdroid.util.GeoPoint
+import java.text.NumberFormat
+import java.util.Locale
 
 // Toạ độ trung tâm Hà Nội — chỉ dùng làm vị trí camera mặc định khi chưa có
 // điểm GPS nào (không nên xảy ra với hành trình hợp lệ, nhưng tránh crash).
@@ -35,6 +38,7 @@ fun TripDetailScreen(
     val trip by viewModel.trip.collectAsState()
     val points by viewModel.points.collectAsState()
     val loaded by viewModel.loaded.collectAsState()
+    val fuelSettings by viewModel.fuelSettings.collectAsState()
 
     Scaffold(
         topBar = {
@@ -78,6 +82,20 @@ fun TripDetailScreen(
                             "${"%.2f".format(currentTrip.distanceMeters / 1000.0)} km (ước tính)",
                             style = MaterialTheme.typography.bodyMedium
                         )
+                        currentTrip.fuelVehicleType?.let { vehicle ->
+                            val cost = FuelCostCalculator.estimateCostVnd(
+                                distanceMeters = currentTrip.distanceMeters,
+                                vehicleType = vehicle,
+                                motorbikeLitersPer100Km = fuelSettings.motorbikeLitersPer100Km,
+                                carLitersPer100Km = fuelSettings.carLitersPer100Km,
+                                pricePerLiterVnd = fuelSettings.pricePerLiterVnd
+                            )
+                            val currencyFormatter = NumberFormat.getNumberInstance(Locale("vi", "VN"))
+                            Text(
+                                "~${currencyFormatter.format(cost)}đ tiền xăng (ước tính)",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                         if (geoPoints.isEmpty()) {
                             Text(
                                 "Không có dữ liệu đường đi chi tiết cho hành trình này.",

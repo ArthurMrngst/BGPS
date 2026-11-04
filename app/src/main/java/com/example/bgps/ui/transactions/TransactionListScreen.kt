@@ -53,6 +53,7 @@ fun TransactionListScreen(
     onEditTransaction: (String) -> Unit = {},
     onOpenNotificationAccess: () -> Unit = {},
     onOpenTrips: () -> Unit = {},
+    onOpenSpendingMap: () -> Unit = {},
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactions.collectAsState()
@@ -76,7 +77,10 @@ fun TransactionListScreen(
         topBar = {
             TopAppBar(
                 title = { Text("BGps") },
-                actions = { TextButton(onClick = onOpenTrips) { Text("Hành trình") } }
+                actions = {
+                    TextButton(onClick = onOpenSpendingMap) { Text("Bản đồ") }
+                    TextButton(onClick = onOpenTrips) { Text("Hành trình") }
+                }
             )
         }
     ) { innerPadding ->

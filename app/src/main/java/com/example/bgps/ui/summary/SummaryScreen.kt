@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,12 +40,22 @@ import com.example.bgps.ui.theme.IncomeBlue
 import kotlin.math.roundToInt
 
 @Composable
-fun SummaryScreen(viewModel: SummaryViewModel = hiltViewModel()) {
+fun SummaryScreen(
+    onOpenBudget: () -> Unit = {},
+    viewModel: SummaryViewModel = hiltViewModel()
+) {
     val summary by viewModel.summary.collectAsState()
     val period by viewModel.period.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Tổng hợp") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Tổng hợp") },
+                actions = {
+                    TextButton(onClick = onOpenBudget) { Text("Ngân sách") }
+                }
+            )
+        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -174,5 +185,20 @@ private fun CategoryRow(item: CategoryTotal) {
             color = ExpenseOrange,
             modifier = Modifier.fillMaxWidth()
         )
+        val limit = item.budgetLimit
+        if (limit != null) {
+            val overBudget = item.total > limit
+            Text(
+                "Ngân sách: ${formatVnd(item.total)} / ${formatVnd(limit)}" +
+                    if (overBudget) " — đã vượt ngân sách" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (overBudget) ExpenseOrange else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            LinearProgressIndicator(
+                progress = { (item.total.toFloat() / limit).coerceAtMost(1f) },
+                color = if (overBudget) ExpenseOrange else IncomeBlue,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

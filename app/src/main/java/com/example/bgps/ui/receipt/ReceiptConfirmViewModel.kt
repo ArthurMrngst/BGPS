@@ -10,6 +10,7 @@ import com.example.bgps.data.database.TransactionSource
 import com.example.bgps.data.database.TransactionType
 import com.example.bgps.data.repository.TransactionRepository
 import com.example.bgps.domain.ocr.ReceiptParser
+import com.example.bgps.location.CurrentLocationProvider
 import com.example.bgps.ocr.ReceiptTextRecognizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class ReceiptConfirmViewModel @Inject constructor(
     private val repository: TransactionRepository,
     private val textRecognizer: ReceiptTextRecognizer,
+    private val currentLocationProvider: CurrentLocationProvider,
     @ApplicationContext private val appContext: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -60,6 +62,7 @@ class ReceiptConfirmViewModel @Inject constructor(
 
     fun save(amount: Long, date: Long, category: String, note: String?) {
         viewModelScope.launch {
+            val location = currentLocationProvider.getLastLocation()
             repository.save(
                 TransactionEntity(
                     amount = amount,
@@ -67,7 +70,9 @@ class ReceiptConfirmViewModel @Inject constructor(
                     category = category,
                     note = note?.takeIf { it.isNotBlank() },
                     source = TransactionSource.OCR,
-                    timestamp = date
+                    timestamp = date,
+                    latitude = location?.first,
+                    longitude = location?.second
                 )
             )
             _saved.value = true

@@ -12,14 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -37,10 +40,14 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.bgps.data.database.FuelVehicleType
 import com.example.bgps.data.database.TripEntity
 import com.example.bgps.data.database.VehicleType
+import com.example.bgps.domain.trip.FuelCostCalculator
+import com.example.bgps.location.FuelSettings
 import com.example.bgps.location.TripTrackingService
 import com.example.bgps.location.hasForegroundLocationPermission
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -49,17 +56,21 @@ import java.util.Locale
 fun TripListScreen(
     onOpenLocationAccess: () -> Unit,
     onOpenTripDetail: (String) -> Unit = {},
+    onOpenLiveTrip: () -> Unit = {},
+    onOpenFuelSettings: () -> Unit = {},
     viewModel: TripViewModel = hiltViewModel()
 ) {
     val trips by viewModel.trips.collectAsState()
+    val isTracking by viewModel.isTracking.collectAsState()
+    val fuelSettings by viewModel.fuelSettings.collectAsState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var locationGranted by remember { mutableStateOf(hasForegroundLocationPermission(context)) }
-    // Chỉ là trạng thái lạc quan theo thao tác bấm nút gần nhất, không hỏi
-    // lại service đang chạy thật hay không — đủ dùng cho một màn đơn giản,
-    // không cần thêm cơ chế đồng bộ trạng thái phức tạp.
-    var isTracking by remember { mutableStateOf(false) }
+    // Activity Recognition chỉ biết "đang ở trong xe" nói chung, không tách
+    // được xe máy/ô tô — để người dùng chọn thủ công trước khi bắt đầu, chỉ
+    // dùng cho tính tiền xăng ước tính (không chọn thì không tính xăng).
+    var selectedFuelVehicle by remember { mutableStateOf<FuelVehicleType?>(null) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -72,7 +83,14 @@ fun TripListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Hành trình") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Hành trình") },
+                actions = {
+                    TextButton(onClick = onOpenFuelSettings) { Text("Cài đặt xăng") }
+                }
+            )
+        }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)) {
             if (!locationGranted) {
@@ -85,18 +103,48 @@ fun TripListScreen(
                         )
                     }
                 }
+            } else if (isTracking) {
+                Button(onClick = onOpenLiveTrip, modifier = Modifier.fillMaxWidth()) {
+                    Text("Đang ghi hành trình — xem bản đồ")
+                }
             } else {
+                Text("Phương tiện (để tính tiền xăng)", style = MaterialTheme.typography.titleSmall)
+                Row(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)) {
+                    FilterChip(
+                        selected = selectedFuelVehicle == FuelVehicleType.MOTORBIKE,
+                        onClick = {
+                            selectedFuelVehicle = if (selectedFuelVehicle == FuelVehicleType.MOTORBIKE) {
+                                null
+                            } else {
+                                FuelVehicleType.MOTORBIKE
+                            }
+                        },
+                        label = { Text("Xe máy") }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilterChip(
+                        selected = selectedFuelVehicle == FuelVehicleType.CAR,
+                        onClick = {
+                            selectedFuelVehicle = if (selectedFuelVehicle == FuelVehicleType.CAR) {
+                                null
+                            } else {
+                                FuelVehicleType.CAR
+                            }
+                        },
+                        label = { Text("Ô tô") }
+                    )
+                }
                 Button(
                     onClick = {
                         val intent = Intent(context, TripTrackingService::class.java).apply {
-                            if (isTracking) action = TripTrackingService.ACTION_STOP
+                            putExtra(TripTrackingService.EXTRA_FUEL_VEHICLE_TYPE, selectedFuelVehicle?.name)
                         }
                         ContextCompat.startForegroundService(context, intent)
-                        isTracking = !isTracking
+                        onOpenLiveTrip()
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (isTracking) "Dừng hành trình" else "Bắt đầu hành trình")
+                    Text("Bắt đầu hành trình")
                 }
             }
 
@@ -109,7 +157,7 @@ fun TripListScreen(
             } else {
                 LazyColumn {
                     items(trips, key = { it.id }) { trip ->
-                        TripRow(trip, onClick = { onOpenTripDetail(trip.id) })
+                        TripRow(trip, fuelSettings, onClick = { onOpenTripDetail(trip.id) })
                     }
                 }
             }
@@ -118,8 +166,9 @@ fun TripListScreen(
 }
 
 @Composable
-private fun TripRow(trip: TripEntity, onClick: () -> Unit) {
+private fun TripRow(trip: TripEntity, fuelSettings: FuelSettings, onClick: () -> Unit) {
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val currencyFormatter = remember { NumberFormat.getNumberInstance(Locale("vi", "VN")) }
     val km = trip.distanceMeters / 1000.0
 
     Card(
@@ -132,6 +181,19 @@ private fun TripRow(trip: TripEntity, onClick: () -> Unit) {
                 Text("${"%.1f".format(km)} km (ước tính)")
             }
             Text(dateFormatter.format(Date(trip.startTime)), style = MaterialTheme.typography.bodySmall)
+            trip.fuelVehicleType?.let { vehicle ->
+                val cost = FuelCostCalculator.estimateCostVnd(
+                    distanceMeters = trip.distanceMeters,
+                    vehicleType = vehicle,
+                    motorbikeLitersPer100Km = fuelSettings.motorbikeLitersPer100Km,
+                    carLitersPer100Km = fuelSettings.carLitersPer100Km,
+                    pricePerLiterVnd = fuelSettings.pricePerLiterVnd
+                )
+                Text(
+                    "~${currencyFormatter.format(cost)}đ tiền xăng (ước tính)",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }

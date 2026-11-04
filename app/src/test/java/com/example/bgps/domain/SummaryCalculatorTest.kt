@@ -57,4 +57,46 @@ class SummaryCalculatorTest {
         Assert.assertEquals(0L, result.totalIncome)
         Assert.assertEquals(0, result.byCategory.size)
     }
+
+    @Test
+    fun `attaches the budget limit for a matching category in month view`() {
+        val list = listOf(tx(50_000L, TransactionType.EXPENSE, "Ăn uống", 1_000L))
+
+        val result = SummaryCalculator.summarize(
+            list,
+            from = 0L,
+            period = SummaryPeriod.MONTH,
+            budgets = mapOf("Ăn uống" to 800_000L)
+        )
+
+        Assert.assertEquals(800_000L, result.byCategory[0].budgetLimit)
+    }
+
+    @Test
+    fun `category without a budget has a null limit`() {
+        val list = listOf(tx(50_000L, TransactionType.EXPENSE, "Ăn uống", 1_000L))
+
+        val result = SummaryCalculator.summarize(
+            list,
+            from = 0L,
+            period = SummaryPeriod.MONTH,
+            budgets = mapOf("Di chuyển" to 300_000L)
+        )
+
+        Assert.assertEquals(null, result.byCategory[0].budgetLimit)
+    }
+
+    @Test
+    fun `week view never attaches a budget limit since budgets are monthly`() {
+        val list = listOf(tx(50_000L, TransactionType.EXPENSE, "Ăn uống", 1_000L))
+
+        val result = SummaryCalculator.summarize(
+            list,
+            from = 0L,
+            period = SummaryPeriod.WEEK,
+            budgets = mapOf("Ăn uống" to 800_000L)
+        )
+
+        Assert.assertEquals(null, result.byCategory[0].budgetLimit)
+    }
 }

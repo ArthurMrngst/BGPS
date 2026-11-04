@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.bgps.data.database.TripEntity
 import com.example.bgps.data.database.TripPointEntity
 import com.example.bgps.data.repository.TripRepository
+import com.example.bgps.location.FuelSettings
+import com.example.bgps.location.FuelSettingsStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +18,13 @@ import javax.inject.Inject
 @HiltViewModel
 class TripDetailViewModel @Inject constructor(
     private val repository: TripRepository,
+    fuelSettingsStore: FuelSettingsStore,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val tripId: String = checkNotNull(savedStateHandle["tripId"])
+
+    val fuelSettings: StateFlow<FuelSettings> = fuelSettingsStore.settings
 
     private val _trip = MutableStateFlow<TripEntity?>(null)
     val trip: StateFlow<TripEntity?> = _trip.asStateFlow()

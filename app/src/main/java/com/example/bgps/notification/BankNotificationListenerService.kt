@@ -9,6 +9,7 @@ import com.example.bgps.data.repository.TransactionRepository
 import com.example.bgps.domain.Category
 import com.example.bgps.domain.CategoryClassifier
 import com.example.bgps.domain.parsing.NotificationParsers
+import com.example.bgps.location.CurrentLocationProvider
 import com.example.bgps.location.LastKnownLocationStore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,9 @@ class BankNotificationListenerService : NotificationListenerService() {
 
     @Inject
     lateinit var lastKnownLocationStore: LastKnownLocationStore
+
+    @Inject
+    lateinit var currentLocationProvider: CurrentLocationProvider
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -47,12 +51,27 @@ class BankNotificationListenerService : NotificationListenerService() {
         // không log, không lưu nguyên văn ở bất kỳ đâu (đúng ràng buộc riêng tư).
         val parsed = parser.parse(title, text) ?: return
 
-        // Điểm gần nhất từ A6 (hành trình đang ghi, nếu có) — không xin vị
-        // trí nền riêng cho việc này; không có thì để null, giao dịch vẫn
-        // lưu bình thường (đúng tinh thần ban đầu của Sprint 2).
-        val location = lastKnownLocationStore.getRecent()
+        val timestamp = parsed.timestamp ?: sbn.postTime
 
         scope.launch {
+            // Chặn lưu trùng khi hệ thống đăng/cập nhật lại cùng một thông báo
+            // (xảy ra thật trên một số máy) — xem TransactionRepository.
+            // findDuplicateNotificationTransaction.
+            val duplicate = repository.findDuplicateNotificationTransaction(
+                transactionRef = parsed.transactionRef,
+                amount = parsed.amount,
+                type = parsed.type,
+                timestamp = timestamp
+            )
+            if (duplicate != null) return@launch
+
+            // Ưu tiên điểm ghi được từ A6 (hành trình đang ghi, nếu có) vì nó
+            // chính xác và mới hơn; không có thì mới xin lastLocation của hệ
+            // thống (cần ACCESS_BACKGROUND_LOCATION vì service này chạy nền).
+            // Không có cả hai thì để null, giao dịch vẫn lưu bình thường.
+            val location = lastKnownLocationStore.getRecent()
+                ?: currentLocationProvider.getLastLocation(requireBackgroundPermission = true)
+
             repository.save(
                 TransactionEntity(
                     amount = parsed.amount,
@@ -60,9 +79,10 @@ class BankNotificationListenerService : NotificationListenerService() {
                     category = (CategoryClassifier.suggest(parsed.merchant) ?: Category.default).displayName,
                     merchant = parsed.merchant,
                     source = TransactionSource.NOTIFICATION,
-                    timestamp = parsed.timestamp ?: sbn.postTime,
+                    timestamp = timestamp,
                     latitude = location?.first,
-                    longitude = location?.second
+                    longitude = location?.second,
+                    transactionRef = parsed.transactionRef
                 )
             )
         }

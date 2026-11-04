@@ -12,7 +12,8 @@ enum class SummaryPeriod { WEEK, MONTH }
 data class CategoryTotal(
     val category: String,
     val total: Long,
-    val percent: Float      // tỉ lệ trên tổng chi, từ 0.0 đến 1.0
+    val percent: Float,     // tỉ lệ trên tổng chi, từ 0.0 đến 1.0
+    val budgetLimit: Long? = null // null = danh mục này chưa đặt ngân sách (D1)
 )
 
 data class SpendingSummary(
@@ -34,23 +35,34 @@ object SummaryCalculator {
         return startDate.atStartOfDay(zone).toInstant().toEpochMilli()
     }
 
-    fun summarize(transactions: List<TransactionEntity>, from: Long): SpendingSummary {
+    // budgets: category (chữ gốc, không phân biệt hoa/thường) -> hạn mức hàng
+    // tháng (D1). Chỉ áp cho kỳ THÁNG — ngân sách là hạn mức theo tháng, so
+    // với kỳ TUẦN sẽ không có ý nghĩa.
+    fun summarize(
+        transactions: List<TransactionEntity>,
+        from: Long,
+        period: SummaryPeriod = SummaryPeriod.MONTH,
+        budgets: Map<String, Long> = emptyMap()
+    ): SpendingSummary {
         val inRange = transactions.filter { it.timestamp >= from }
         val expenses = inRange.filter { it.type == TransactionType.EXPENSE }
 
         val totalExpense = expenses.sumOf { it.amount }
         val totalIncome = inRange.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
 
+        val normalizedBudgets = budgets.mapKeys { (category, _) -> category.trim().lowercase() }
+
         val byCategory = expenses
             // Danh mục đang là chữ tự gõ nên gộp không phân biệt hoa/thường và khoảng trắng thừa.
             // Sau này có bộ chọn danh mục (B3) thì không cần bước này nữa.
             .groupBy { it.category.trim().lowercase() }
-            .map { (_, items) ->
+            .map { (key, items) ->
                 val total = items.sumOf { it.amount }
                 CategoryTotal(
                     category = items.first().category.trim(),
                     total = total,
-                    percent = if (totalExpense > 0) total.toFloat() / totalExpense else 0f
+                    percent = if (totalExpense > 0) total.toFloat() / totalExpense else 0f,
+                    budgetLimit = if (period == SummaryPeriod.MONTH) normalizedBudgets[key] else null
                 )
             }
             .sortedByDescending { it.total }

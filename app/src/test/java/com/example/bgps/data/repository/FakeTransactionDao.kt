@@ -2,6 +2,8 @@ package com.example.bgps.data.repository
 
 import com.example.bgps.data.database.TransactionDao
 import com.example.bgps.data.database.TransactionEntity
+import com.example.bgps.data.database.TransactionSource
+import com.example.bgps.data.database.TransactionType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -30,4 +32,18 @@ class FakeTransactionDao : TransactionDao {
 
     override suspend fun getDirty(): List<TransactionEntity> =
         state.value.filter { it.isDirty }
+
+    override suspend fun findPossibleDuplicate(
+        source: TransactionSource,
+        transactionRef: String?,
+        amount: Long,
+        type: TransactionType,
+        minTimestamp: Long,
+        maxTimestamp: Long
+    ): TransactionEntity? = state.value.firstOrNull { tx ->
+        !tx.isDeleted && tx.source == source && (
+            (transactionRef != null && tx.transactionRef == transactionRef) ||
+                (tx.amount == amount && tx.type == type && tx.timestamp in minTimestamp..maxTimestamp)
+            )
+    }
 }

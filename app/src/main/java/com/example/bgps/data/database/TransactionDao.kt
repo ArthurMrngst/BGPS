@@ -27,4 +27,27 @@ interface TransactionDao {
     // Dùng ở bước đồng bộ sau này: lấy các thay đổi chưa gửi lên server
     @Query("SELECT * FROM transactions WHERE isDirty = 1")
     suspend fun getDirty(): List<TransactionEntity>
+
+    // Chống lưu trùng giao dịch từ thông báo (xem TransactionRepository.
+    // findDuplicateNotificationTransaction): trùng mã tham chiếu (nếu có) HOẶC
+    // cùng số tiền + loại trong một khoảng thời gian ngắn quanh thời điểm mới.
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE isDeleted = 0 AND source = :source
+        AND (
+            (transactionRef IS NOT NULL AND transactionRef = :transactionRef)
+            OR (amount = :amount AND type = :type AND timestamp BETWEEN :minTimestamp AND :maxTimestamp)
+        )
+        LIMIT 1
+        """
+    )
+    suspend fun findPossibleDuplicate(
+        source: TransactionSource,
+        transactionRef: String?,
+        amount: Long,
+        type: TransactionType,
+        minTimestamp: Long,
+        maxTimestamp: Long
+    ): TransactionEntity?
 }
