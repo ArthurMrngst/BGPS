@@ -6,8 +6,8 @@ import android.service.notification.StatusBarNotification
 import com.example.bgps.data.database.TransactionEntity
 import com.example.bgps.data.database.TransactionSource
 import com.example.bgps.data.repository.TransactionRepository
-import com.example.bgps.domain.Category
 import com.example.bgps.domain.CategoryClassifier
+import com.example.bgps.domain.DefaultCategories
 import com.example.bgps.domain.parsing.NotificationParsers
 import com.example.bgps.location.CurrentLocationProvider
 import com.example.bgps.location.LastKnownLocationStore
@@ -76,7 +76,7 @@ class BankNotificationListenerService : NotificationListenerService() {
                 TransactionEntity(
                     amount = parsed.amount,
                     type = parsed.type,
-                    category = (CategoryClassifier.suggest(parsed.merchant) ?: Category.default).displayName,
+                    category = CategoryClassifier.suggest(parsed.merchant) ?: DefaultCategories.FALLBACK_NAME,
                     merchant = parsed.merchant,
                     source = TransactionSource.NOTIFICATION,
                     timestamp = timestamp,

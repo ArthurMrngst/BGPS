@@ -50,4 +50,10 @@ interface TransactionDao {
         minTimestamp: Long,
         maxTimestamp: Long
     ): TransactionEntity?
+
+    // Dùng khi đổi tên hoặc xoá-gộp danh mục (B3 phần 2): mọi giao dịch đang
+    // gắn danh mục cũ chuyển sang tên mới, đánh dấu isDirty như một lần sửa
+    // bình thường để còn đồng bộ lên server sau này.
+    @Query("UPDATE transactions SET category = :newCategory, isDirty = 1, updatedAt = :now WHERE category = :oldCategory")
+    suspend fun renameCategory(oldCategory: String, newCategory: String, now: Long)
 }

@@ -31,18 +31,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.bgps.domain.Category
 
 // Đặt hạn mức chi tiêu hàng tháng cho từng danh mục (D1) — để trống hoặc 0
-// nghĩa là không theo dõi ngân sách cho danh mục đó. Dùng danh sách cố định
-// Category (giống bộ chọn danh mục B3) thay vì để người dùng tự gõ tên danh
-// mục, để khớp chính xác với category lưu trên TransactionEntity.
+// nghĩa là không theo dõi ngân sách cho danh mục đó. Danh sách danh mục giờ
+// đọc động từ CategoryRepository (B3 phần 2), không còn enum cố định.
 @Composable
 fun BudgetScreen(
     onBack: () -> Unit,
     viewModel: BudgetViewModel = hiltViewModel()
 ) {
     val budgets by viewModel.budgets.collectAsState()
+    val categoryNames by viewModel.categoryNames.collectAsState()
 
     Scaffold(
         topBar = {
@@ -53,12 +52,12 @@ fun BudgetScreen(
         }
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)) {
-            items(Category.entries.toList(), key = { it.displayName }) { category ->
-                val currentLimit = budgets.find { it.category == category.displayName }?.monthlyLimit
+            items(categoryNames, key = { it }) { category ->
+                val currentLimit = budgets.find { it.category == category }?.monthlyLimit
                 BudgetRow(
-                    category = category.displayName,
+                    category = category,
                     currentLimit = currentLimit,
-                    onSave = { limit -> viewModel.save(category.displayName, limit) }
+                    onSave = { limit -> viewModel.save(category, limit) }
                 )
             }
         }

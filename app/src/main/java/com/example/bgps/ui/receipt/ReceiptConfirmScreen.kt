@@ -38,7 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.bgps.domain.Category
+import com.example.bgps.domain.DefaultCategories
 import com.example.bgps.ui.transactions.CategoryChipGrid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,7 +59,7 @@ fun ReceiptConfirmScreen(
 
     var amountText by remember { mutableStateOf("") }
     var dateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
-    var category by remember { mutableStateOf(Category.default) }
+    var category by remember { mutableStateOf(DefaultCategories.FALLBACK_NAME) }
     var noteText by remember { mutableStateOf("") }
     var prefilled by remember { mutableStateOf(false) }
 
@@ -166,7 +166,7 @@ fun ReceiptConfirmScreen(
                 TextButton(
                     enabled = amount != null && amount > 0,
                     onClick = {
-                        amount?.let { viewModel.save(it, dateMillis, category.displayName, noteText) }
+                        amount?.let { viewModel.save(it, dateMillis, category, noteText) }
                     }
                 ) { Text("Lưu") }
             }

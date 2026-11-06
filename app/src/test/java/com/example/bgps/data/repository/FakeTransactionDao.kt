@@ -46,4 +46,14 @@ class FakeTransactionDao : TransactionDao {
                 (tx.amount == amount && tx.type == type && tx.timestamp in minTimestamp..maxTimestamp)
             )
     }
+
+    override suspend fun renameCategory(oldCategory: String, newCategory: String, now: Long) {
+        state.value = state.value.map { tx ->
+            if (tx.category == oldCategory) {
+                tx.copy(category = newCategory, isDirty = true, updatedAt = now)
+            } else {
+                tx
+            }
+        }
+    }
 }

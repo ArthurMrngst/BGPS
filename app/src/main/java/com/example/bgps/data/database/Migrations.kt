@@ -78,3 +78,25 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+// Thêm bảng categories (B3 phần 2) — danh mục giờ là dữ liệu người dùng tự
+// quản lý thay vì enum cố định. Bảng để trống sau migration; việc chèn 11
+// danh mục khởi tạo nằm ở CategoryRepository.ensureSeeded() (gọi từ
+// BGpsApplication.onCreate) để dùng chung một chỗ cho cả cài mới lẫn nâng
+// cấp, không lặp lại danh sách này ở đây.
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS categories (
+                id TEXT NOT NULL PRIMARY KEY,
+                displayName TEXT NOT NULL,
+                icon TEXT,
+                colorHex TEXT,
+                isBuiltIn INTEGER NOT NULL,
+                sortOrder INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}

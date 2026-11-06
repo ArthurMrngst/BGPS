@@ -104,7 +104,7 @@ fun EditTransactionScreen(
                                     viewModel.save(
                                         amount = amount,
                                         type = state.type,
-                                        category = state.category.displayName,
+                                        category = state.category,
                                         merchant = state.merchantText.trim().takeIf { it.isNotBlank() },
                                         note = state.noteText
                                     )

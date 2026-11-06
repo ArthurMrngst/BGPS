@@ -37,7 +37,7 @@ fun AddTransactionDialog(
                         onConfirm(
                             amount,
                             state.type,
-                            state.category.displayName,
+                            state.category,
                             state.merchantText.trim().takeIf { it.isNotBlank() },
                             state.noteText
                         )

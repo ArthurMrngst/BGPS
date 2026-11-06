@@ -11,6 +11,9 @@ interface BudgetDao {
     @Query("SELECT * FROM budgets")
     fun observeAll(): Flow<List<BudgetEntity>>
 
+    @Query("SELECT * FROM budgets WHERE category = :category LIMIT 1")
+    suspend fun getByCategory(category: String): BudgetEntity?
+
     @Upsert
     suspend fun upsert(budget: BudgetEntity)
 

@@ -11,25 +11,30 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.bgps.data.database.TransactionEntity
 import com.example.bgps.data.database.TransactionType
-import com.example.bgps.domain.Category
 import com.example.bgps.domain.CategoryClassifier
+import com.example.bgps.domain.DefaultCategories
 
 // Gom state của form thêm/sửa giao dịch vào một chỗ để hai màn hình dùng chung.
 class TransactionFormState(initial: TransactionEntity?) {
     var amountText by mutableStateOf(initial?.amount?.toString() ?: "")
     var type by mutableStateOf(initial?.type ?: TransactionType.EXPENSE)
     var merchantText by mutableStateOf(initial?.merchant ?: "")
-    var category by mutableStateOf(
-        initial?.category?.let { Category.fromDisplayName(it) } ?: Category.default
-    )
+
+    // Danh mục giờ là chuỗi tự do (B3 phần 2 — người dùng tự thêm/sửa/xoá
+    // được), không còn enum cố định nên không cần tra cứu/chuẩn hoá gì ở
+    // đây — dùng thẳng giá trị đã lưu, hoặc "Khác" cho giao dịch mới.
+    var category by mutableStateOf(initial?.category ?: DefaultCategories.FALLBACK_NAME)
+
     var noteText by mutableStateOf(initial?.note ?: "")
 
     // Sửa giao dịch có sẵn thì không tự ý đè danh mục người dùng đã chọn từ trước;
@@ -98,16 +103,24 @@ fun TransactionFormFields(state: TransactionFormState) {
 }
 
 // Tách riêng để màn xác nhận hoá đơn (ReceiptConfirmScreen) dùng lại được,
-// không phải chép lại lưới 11 chip danh mục.
+// không phải chép lại lưới chip danh mục. Tự đọc danh sách danh mục hiện có
+// qua CategoryChipGridViewModel thay vì nhận qua tham số — nơi gọi chỉ cần
+// quan tâm tên đang chọn, không cần biết/truyền toàn bộ danh sách.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun CategoryChipGrid(selected: Category, onSelect: (Category) -> Unit) {
+fun CategoryChipGrid(
+    selected: String,
+    onSelect: (String) -> Unit,
+    viewModel: CategoryChipGridViewModel = hiltViewModel()
+) {
+    val categories by viewModel.categoryNames.collectAsState()
+
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Category.entries.forEach { c ->
+        categories.forEach { name ->
             FilterChip(
-                selected = selected == c,
-                onClick = { onSelect(c) },
-                label = { Text(c.displayName) }
+                selected = selected == name,
+                onClick = { onSelect(name) },
+                label = { Text(name) }
             )
         }
     }

@@ -23,6 +23,7 @@ import com.example.bgps.ui.receipt.ReceiptConfirmScreen
 import com.example.bgps.ui.summary.BudgetScreen
 import com.example.bgps.ui.summary.SummaryScreen
 import com.example.bgps.ui.transactions.AddTransactionDialog
+import com.example.bgps.ui.transactions.CategoryManageScreen
 import com.example.bgps.ui.transactions.EditTransactionScreen
 import com.example.bgps.ui.transactions.SpendingMapScreen
 import com.example.bgps.ui.transactions.TransactionListScreen
@@ -31,6 +32,7 @@ import com.example.bgps.ui.trips.FuelSettingsScreen
 import com.example.bgps.ui.trips.LiveTripScreen
 import com.example.bgps.ui.trips.TripDetailScreen
 import com.example.bgps.ui.trips.TripListScreen
+import com.example.bgps.ui.trips.TripStatsScreen
 
 object Routes {
     const val TRANSACTIONS = "transactions"
@@ -46,6 +48,8 @@ object Routes {
     const val SPENDING_MAP = "spendingMap"
     const val FUEL_SETTINGS = "fuelSettings"
     const val BUDGET = "budget"
+    const val TRIP_STATS = "tripStats"
+    const val CATEGORY_MANAGE = "categoryManage"
 
     fun editTransaction(transactionId: String) = "editTransaction/$transactionId"
     fun receiptConfirm(imageUri: String) = "receiptConfirm/${Uri.encode(imageUri)}"
@@ -100,11 +104,15 @@ fun AppNavHost() {
                     onEditTransaction = { id -> navController.navigate(Routes.editTransaction(id)) },
                     onOpenNotificationAccess = { navController.navigate(Routes.NOTIFICATION_ACCESS) },
                     onOpenTrips = { navController.navigate(Routes.TRIPS) },
-                    onOpenSpendingMap = { navController.navigate(Routes.SPENDING_MAP) }
+                    onOpenSpendingMap = { navController.navigate(Routes.SPENDING_MAP) },
+                    onOpenCategoryManage = { navController.navigate(Routes.CATEGORY_MANAGE) }
                 )
             }
             composable(Routes.SPENDING_MAP) {
                 SpendingMapScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.CATEGORY_MANAGE) {
+                CategoryManageScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.SUMMARY) {
                 SummaryScreen(onOpenBudget = { navController.navigate(Routes.BUDGET) })
@@ -142,7 +150,8 @@ fun AppNavHost() {
                     onOpenLocationAccess = { navController.navigate(Routes.LOCATION_ACCESS) },
                     onOpenTripDetail = { tripId -> navController.navigate(Routes.tripDetail(tripId)) },
                     onOpenLiveTrip = { navController.navigate(Routes.LIVE_TRIP) },
-                    onOpenFuelSettings = { navController.navigate(Routes.FUEL_SETTINGS) }
+                    onOpenFuelSettings = { navController.navigate(Routes.FUEL_SETTINGS) },
+                    onOpenTripStats = { navController.navigate(Routes.TRIP_STATS) }
                 )
             }
             composable(Routes.LOCATION_ACCESS) {
@@ -153,6 +162,9 @@ fun AppNavHost() {
             }
             composable(Routes.FUEL_SETTINGS) {
                 FuelSettingsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.TRIP_STATS) {
+                TripStatsScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.TRIP_DETAIL,

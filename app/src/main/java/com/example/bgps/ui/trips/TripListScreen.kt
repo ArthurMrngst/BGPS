@@ -58,6 +58,7 @@ fun TripListScreen(
     onOpenTripDetail: (String) -> Unit = {},
     onOpenLiveTrip: () -> Unit = {},
     onOpenFuelSettings: () -> Unit = {},
+    onOpenTripStats: () -> Unit = {},
     viewModel: TripViewModel = hiltViewModel()
 ) {
     val trips by viewModel.trips.collectAsState()
@@ -87,6 +88,7 @@ fun TripListScreen(
             TopAppBar(
                 title = { Text("Hành trình") },
                 actions = {
+                    TextButton(onClick = onOpenTripStats) { Text("Thống kê") }
                     TextButton(onClick = onOpenFuelSettings) { Text("Cài đặt xăng") }
                 }
             )

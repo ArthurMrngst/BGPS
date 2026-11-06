@@ -8,15 +8,15 @@ class CategoryClassifierTest {
 
     @Test
     fun `matches known merchant keyword`() {
-        assertEquals(Category.AN_UONG, CategoryClassifier.suggest("Highlands Coffee - Nguyen Hue"))
-        assertEquals(Category.DI_CHUYEN, CategoryClassifier.suggest("GRAB *TRIP HCM"))
-        assertEquals(Category.SUC_KHOE, CategoryClassifier.suggest("Nha thuoc Long Chau 123"))
+        assertEquals("Ăn uống", CategoryClassifier.suggest("Highlands Coffee - Nguyen Hue"))
+        assertEquals("Di chuyển", CategoryClassifier.suggest("GRAB *TRIP HCM"))
+        assertEquals("Sức khoẻ", CategoryClassifier.suggest("Nha thuoc Long Chau 123"))
     }
 
     @Test
     fun `is case insensitive`() {
-        assertEquals(Category.MUA_SAM, CategoryClassifier.suggest("shopee vietnam"))
-        assertEquals(Category.MUA_SAM, CategoryClassifier.suggest("SHOPEE VIETNAM"))
+        assertEquals("Mua sắm", CategoryClassifier.suggest("shopee vietnam"))
+        assertEquals("Mua sắm", CategoryClassifier.suggest("SHOPEE VIETNAM"))
     }
 
     @Test
@@ -34,6 +34,6 @@ class CategoryClassifierTest {
     fun `hospital keyword is not shadowed by a shorter ride-hailing keyword`() {
         // "benh vien" chứa chuỗi con "be" (ứng dụng gọi xe); nếu có ai thêm "be" làm từ
         // khoá Di chuyển sau này, test này sẽ bắt được lỗi phân loại nhầm.
-        assertEquals(Category.SUC_KHOE, CategoryClassifier.suggest("Benh vien Cho Ray"))
+        assertEquals("Sức khoẻ", CategoryClassifier.suggest("Benh vien Cho Ray"))
     }
 }
