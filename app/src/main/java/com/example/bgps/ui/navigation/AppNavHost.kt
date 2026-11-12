@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bgps.ui.account.AccountScreen
 import com.example.bgps.ui.location.LocationAccessScreen
 import com.example.bgps.ui.notifications.NotificationAccessScreen
 import com.example.bgps.ui.receipt.ReceiptCaptureScreen
@@ -50,6 +51,7 @@ object Routes {
     const val BUDGET = "budget"
     const val TRIP_STATS = "tripStats"
     const val CATEGORY_MANAGE = "categoryManage"
+    const val ACCOUNT = "account"
 
     fun editTransaction(transactionId: String) = "editTransaction/$transactionId"
     fun receiptConfirm(imageUri: String) = "receiptConfirm/${Uri.encode(imageUri)}"
@@ -105,7 +107,8 @@ fun AppNavHost() {
                     onOpenNotificationAccess = { navController.navigate(Routes.NOTIFICATION_ACCESS) },
                     onOpenTrips = { navController.navigate(Routes.TRIPS) },
                     onOpenSpendingMap = { navController.navigate(Routes.SPENDING_MAP) },
-                    onOpenCategoryManage = { navController.navigate(Routes.CATEGORY_MANAGE) }
+                    onOpenCategoryManage = { navController.navigate(Routes.CATEGORY_MANAGE) },
+                    onOpenAccount = { navController.navigate(Routes.ACCOUNT) }
                 )
             }
             composable(Routes.SPENDING_MAP) {
@@ -113,6 +116,9 @@ fun AppNavHost() {
             }
             composable(Routes.CATEGORY_MANAGE) {
                 CategoryManageScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.ACCOUNT) {
+                AccountScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.SUMMARY) {
                 SummaryScreen(onOpenBudget = { navController.navigate(Routes.BUDGET) })

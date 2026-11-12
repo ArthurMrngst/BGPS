@@ -66,7 +66,8 @@ fun LiveTripScreen(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 center = current ?: DEFAULT_CENTER,
                 routePoints = geoPoints,
-                markers = current?.let { listOf(it to "Vị trí hiện tại") } ?: emptyList()
+                markers = current?.let { listOf(it to "Vị trí hiện tại") } ?: emptyList(),
+                followCamera = true
             )
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(

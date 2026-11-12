@@ -33,6 +33,10 @@ class FakeTransactionDao : TransactionDao {
     override suspend fun getDirty(): List<TransactionEntity> =
         state.value.filter { it.isDirty }
 
+    override suspend fun clearDirty(id: String) {
+        state.value = state.value.map { tx -> if (tx.id == id) tx.copy(isDirty = false) else tx }
+    }
+
     override suspend fun findPossibleDuplicate(
         source: TransactionSource,
         transactionRef: String?,

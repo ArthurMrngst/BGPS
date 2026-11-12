@@ -24,9 +24,14 @@ interface TransactionDao {
     @Query("UPDATE transactions SET isDeleted = 1, isDirty = 1, updatedAt = :now WHERE id = :id")
     suspend fun softDelete(id: String, now: Long)
 
-    // Dùng ở bước đồng bộ sau này: lấy các thay đổi chưa gửi lên server
+    // Lấy các thay đổi chưa gửi lên server (xem SyncRepository)
     @Query("SELECT * FROM transactions WHERE isDirty = 1")
     suspend fun getDirty(): List<TransactionEntity>
+
+    // Đánh dấu đã gửi lên server thành công — không đổi updatedAt vì đây
+    // không phải một lần sửa nội dung.
+    @Query("UPDATE transactions SET isDirty = 0 WHERE id = :id")
+    suspend fun clearDirty(id: String)
 
     // Chống lưu trùng giao dịch từ thông báo (xem TransactionRepository.
     // findDuplicateNotificationTransaction): trùng mã tham chiếu (nếu có) HOẶC

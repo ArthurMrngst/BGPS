@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backend chạy local trên máy tính, gọi qua `adb reverse tcp:3000 tcp:3000`
+    nên là HTTP thường (localhost), không có HTTPS — chỉ cho phép cleartext
+    riêng cho localhost, không mở cho toàn bộ domain khác.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

@@ -40,7 +40,13 @@ fun OsmMapView(
     center: GeoPoint,
     zoom: Double = 16.0,
     routePoints: List<GeoPoint> = emptyList(),
-    markers: List<Pair<GeoPoint, String>> = emptyList()
+    markers: List<Pair<GeoPoint, String>> = emptyList(),
+    // true = tự dời camera theo center mỗi lần cập nhật (màn bản đồ trực
+    // tiếp, cần đuổi theo vị trí di chuyển). Mặc định false: chỉ đặt vị trí
+    // ban đầu lúc tạo map — nếu set lại mỗi lần recompose thì sẽ liên tục đè
+    // mất thao tác zoom/pan bằng tay của người dùng (lỗi thật đã gặp ở màn
+    // sửa giao dịch: cảm giác "không zoom được", "điều khiển không tốt").
+    followCamera: Boolean = false
 ) {
     AndroidView(
         modifier = modifier,
@@ -48,6 +54,8 @@ fun OsmMapView(
             MapView(ctx).apply {
                 setTileSource(OSM_FRANCE)
                 setMultiTouchControls(true)
+                controller.setZoom(zoom)
+                controller.setCenter(center)
             }
         },
         update = { mapView ->
@@ -63,8 +71,10 @@ fun OsmMapView(
                     }
                 )
             }
-            mapView.controller.setZoom(zoom)
-            mapView.controller.setCenter(center)
+            if (followCamera) {
+                mapView.controller.setZoom(zoom)
+                mapView.controller.setCenter(center)
+            }
             mapView.invalidate()
         }
     )
