@@ -24,9 +24,11 @@ import javax.inject.Inject
 sealed interface RecordFuelExpenseState {
     data object Idle : RecordFuelExpenseState
     data object Recorded : RecordFuelExpenseState
-    // Đã có giao dịch cùng danh mục "Xăng xe" gần thời điểm này — hỏi người
-    // dùng có chắc muốn ghi thêm không (tránh tính trùng, xem B3/A8).
-    data object DuplicateWarning : RecordFuelExpenseState
+    // Đã có một chi tiêu thật (bất kỳ danh mục nào — có thể là khoản chuyển
+    // khoản đổ xăng bị xếp vào "Khác" do chưa nhận diện được tên cây xăng)
+    // gần thời điểm này — hỏi người dùng có chắc muốn ghi thêm không, kèm
+    // thông tin khoản đã có để họ tự nhận ra có phải cùng một lần đổ xăng.
+    data class DuplicateWarning(val existing: TransactionEntity) : RecordFuelExpenseState
 }
 
 @HiltViewModel
@@ -71,12 +73,9 @@ class TripDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             if (!force) {
-                val existing = transactionRepository.findRecentFuelExpense(
-                    category = DefaultCategories.FUEL_CATEGORY_NAME,
-                    timestamp = currentTrip.endTime
-                )
+                val existing = transactionRepository.findRecentFuelExpense(timestamp = currentTrip.endTime)
                 if (existing != null) {
-                    _recordFuelExpenseState.value = RecordFuelExpenseState.DuplicateWarning
+                    _recordFuelExpenseState.value = RecordFuelExpenseState.DuplicateWarning(existing)
                     return@launch
                 }
             }

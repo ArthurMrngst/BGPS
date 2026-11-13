@@ -63,16 +63,25 @@ interface TransactionDao {
     suspend fun renameCategory(oldCategory: String, newCategory: String, now: Long)
 
     // Chống ghi trùng khoản xăng khi bấm "Ghi thành chi tiêu" ở màn chi tiết
-    // hành trình (xem TransactionRepository.findRecentFuelExpense) — tìm một
-    // giao dịch bất kỳ cùng danh mục trong khoảng thời gian quanh lúc kết
-    // thúc hành trình, không giới hạn nguồn (có thể người dùng đã tự nhập
-    // tay khoản xăng đó trước khi bấm nút này).
+    // hành trình (xem TransactionRepository.findRecentFuelExpense). Tìm BẤT
+    // KỲ chi tiêu thật nào (không phải do chính nút này tạo ra, tức khác
+    // nguồn GPS) quanh lúc hành trình kết thúc — KHÔNG lọc theo danh mục, vì
+    // một khoản chuyển khoản đổ xăng thật qua thông báo ngân hàng thường rơi
+    // vào danh mục "Khác" (CategoryClassifier chưa có từ khoá tên cây xăng),
+    // không phải "Xăng xe" — nếu chỉ so đúng tên danh mục thì sẽ không bắt
+    // được, dẫn đến tính trùng 2 lần cho cùng một lần đổ xăng.
     @Query(
         """
         SELECT * FROM transactions
-        WHERE isDeleted = 0 AND category = :category AND timestamp BETWEEN :minTimestamp AND :maxTimestamp
+        WHERE isDeleted = 0 AND type = :type AND source != :excludeSource
+        AND timestamp BETWEEN :minTimestamp AND :maxTimestamp
         LIMIT 1
         """
     )
-    suspend fun findRecentByCategory(category: String, minTimestamp: Long, maxTimestamp: Long): TransactionEntity?
+    suspend fun findRecentExpenseExcludingSource(
+        type: TransactionType,
+        excludeSource: TransactionSource,
+        minTimestamp: Long,
+        maxTimestamp: Long
+    ): TransactionEntity?
 }

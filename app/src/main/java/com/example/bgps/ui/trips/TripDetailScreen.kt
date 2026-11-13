@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.bgps.domain.trip.FuelCostCalculator
 import com.example.bgps.ui.common.OsmMapView
+import com.example.bgps.ui.common.formatVnd
 import org.osmdroid.util.GeoPoint
 import java.text.NumberFormat
 import java.util.Locale
@@ -121,12 +122,16 @@ fun TripDetailScreen(
         }
     }
 
-    if (recordState == RecordFuelExpenseState.DuplicateWarning) {
+    (recordState as? RecordFuelExpenseState.DuplicateWarning)?.let { warning ->
         AlertDialog(
             onDismissRequest = viewModel::dismissRecordFuelExpenseState,
-            title = { Text("Đã có khoản xăng gần đây") },
+            title = { Text("Đã có chi tiêu gần đây") },
             text = {
-                Text("Bạn đã có một giao dịch \"Xăng xe\" gần thời điểm hành trình này rồi. Vẫn ghi thêm?")
+                Text(
+                    "Bạn đã có một chi tiêu gần thời điểm hành trình này: " +
+                        "danh mục \"${warning.existing.category}\", ${formatVnd(warning.existing.amount)} — " +
+                        "có thể đó chính là lần đổ xăng này rồi. Vẫn ghi thêm?"
+                )
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.recordFuelExpense(force = true) }) { Text("Vẫn ghi") }

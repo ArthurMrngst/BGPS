@@ -162,7 +162,6 @@ class TransactionRepositoryTest {
         )
 
         val found = repository.findRecentFuelExpense(
-            category = "Xăng xe",
             timestamp = 1_000_000L + 60 * 60 * 1000L // 1 giờ sau, trong cửa sổ 3 giờ
         )
 
@@ -182,7 +181,6 @@ class TransactionRepositoryTest {
         )
 
         val found = repository.findRecentFuelExpense(
-            category = "Xăng xe",
             timestamp = 1_000_000L + 10 * 60 * 60 * 1000L // 10 giờ sau, ngoài cửa sổ
         )
 
@@ -190,18 +188,52 @@ class TransactionRepositoryTest {
     }
 
     @Test
-    fun `does not flag a different category as a fuel expense`() = runTest {
+    fun `flags a real expense in a different category too (vd khoản chuyển khoản đổ xăng rơi vào Khác)`() = runTest {
+        repository.save(
+            TransactionEntity(
+                amount = 80_000L,
+                type = TransactionType.EXPENSE,
+                category = "Khác",
+                source = TransactionSource.NOTIFICATION,
+                timestamp = 1_000_000L
+            )
+        )
+
+        val found = repository.findRecentFuelExpense(timestamp = 1_000_000L)
+
+        assertEquals(80_000L, found?.amount)
+    }
+
+    @Test
+    fun `does not flag its own previously-recorded GPS fuel transaction`() = runTest {
         repository.save(
             TransactionEntity(
                 amount = 50_000L,
                 type = TransactionType.EXPENSE,
-                category = "Ăn uống",
+                category = "Xăng xe",
+                source = TransactionSource.GPS,
+                timestamp = 1_000_000L
+            )
+        )
+
+        val found = repository.findRecentFuelExpense(timestamp = 1_000_000L)
+
+        assertNull(found)
+    }
+
+    @Test
+    fun `does not flag an income transaction as a fuel expense`() = runTest {
+        repository.save(
+            TransactionEntity(
+                amount = 50_000L,
+                type = TransactionType.INCOME,
+                category = "Lương",
                 source = TransactionSource.MANUAL,
                 timestamp = 1_000_000L
             )
         )
 
-        val found = repository.findRecentFuelExpense(category = "Xăng xe", timestamp = 1_000_000L)
+        val found = repository.findRecentFuelExpense(timestamp = 1_000_000L)
 
         assertNull(found)
     }

@@ -35,13 +35,16 @@ class TransactionRepository @Inject constructor(
         maxTimestamp = timestamp + DUPLICATE_WINDOW_MILLIS
     )
 
-    // Dùng trước khi bấm "Ghi thành chi tiêu" ở màn chi tiết hành trình —
-    // nếu đã có một giao dịch cùng danh mục quanh thời điểm hành trình kết
-    // thúc (vd. người dùng tự nhập tay khoản xăng đó rồi), cảnh báo trước
-    // khi ghi thêm để tránh tính trùng.
-    suspend fun findRecentFuelExpense(category: String, timestamp: Long): TransactionEntity? =
-        dao.findRecentByCategory(
-            category = category,
+    // Dùng trước khi bấm "Ghi thành chi tiêu" ở màn chi tiết hành trình. CỐ
+    // TÌNH không lọc theo danh mục — một khoản chuyển khoản đổ xăng thật qua
+    // thông báo ngân hàng thường rơi vào danh mục "Khác" (CategoryClassifier
+    // chưa có từ khoá tên cây xăng), không phải "Xăng xe", nên nếu chỉ so
+    // đúng tên danh mục sẽ không bắt được, dẫn đến tính trùng 2 lần cho cùng
+    // một lần đổ xăng thật. Loại trừ nguồn GPS vì đó chính là nút này tạo ra.
+    suspend fun findRecentFuelExpense(timestamp: Long): TransactionEntity? =
+        dao.findRecentExpenseExcludingSource(
+            type = TransactionType.EXPENSE,
+            excludeSource = TransactionSource.GPS,
             minTimestamp = timestamp - FUEL_DEDUP_WINDOW_MILLIS,
             maxTimestamp = timestamp + FUEL_DEDUP_WINDOW_MILLIS
         )

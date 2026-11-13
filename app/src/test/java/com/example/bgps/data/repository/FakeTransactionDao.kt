@@ -61,11 +61,12 @@ class FakeTransactionDao : TransactionDao {
         }
     }
 
-    override suspend fun findRecentByCategory(
-        category: String,
+    override suspend fun findRecentExpenseExcludingSource(
+        type: TransactionType,
+        excludeSource: TransactionSource,
         minTimestamp: Long,
         maxTimestamp: Long
     ): TransactionEntity? = state.value.firstOrNull { tx ->
-        !tx.isDeleted && tx.category == category && tx.timestamp in minTimestamp..maxTimestamp
+        !tx.isDeleted && tx.type == type && tx.source != excludeSource && tx.timestamp in minTimestamp..maxTimestamp
     }
 }
