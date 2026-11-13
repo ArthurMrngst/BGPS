@@ -29,13 +29,30 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    fun `ensureSeeded inserts the 11 default categories only when the table is empty`() = runTest {
+    fun `ensureSeeded inserts the default categories only once each`() = runTest {
+        val expectedCount = com.example.bgps.domain.DefaultCategories.seed().size
+
         repository.ensureSeeded()
-        assertEquals(11, repository.observeCategories().first().size)
+        assertEquals(expectedCount, repository.observeCategories().first().size)
 
         // Gọi lại lần 2 không được thêm trùng.
         repository.ensureSeeded()
-        assertEquals(11, repository.observeCategories().first().size)
+        assertEquals(expectedCount, repository.observeCategories().first().size)
+    }
+
+    @Test
+    fun `ensureSeeded backfills a newly added default category for an existing install`() = runTest {
+        // Mô phỏng người dùng đã cài từ trước, lúc đó seed() chưa có "Xăng
+        // xe" — chèn sẵn 11 danh mục cũ (không gọi seed() đủ).
+        com.example.bgps.domain.DefaultCategories.seed()
+            .filter { it.displayName != com.example.bgps.domain.DefaultCategories.FUEL_CATEGORY_NAME }
+            .forEach { categoryDao.upsert(it) }
+
+        repository.ensureSeeded()
+
+        val names = repository.observeCategories().first().map { it.displayName }
+        assertTrue(names.contains(com.example.bgps.domain.DefaultCategories.FUEL_CATEGORY_NAME))
+        assertEquals(com.example.bgps.domain.DefaultCategories.seed().size, names.size)
     }
 
     @Test

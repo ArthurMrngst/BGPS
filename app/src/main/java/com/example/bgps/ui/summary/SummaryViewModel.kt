@@ -2,11 +2,16 @@ package com.example.bgps.ui.summary
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bgps.data.database.TransactionType
 import com.example.bgps.data.repository.BudgetRepository
 import com.example.bgps.data.repository.TransactionRepository
+import com.example.bgps.data.repository.TripRepository
+import com.example.bgps.domain.DefaultCategories
 import com.example.bgps.domain.SpendingSummary
 import com.example.bgps.domain.SummaryCalculator
 import com.example.bgps.domain.SummaryPeriod
+import com.example.bgps.domain.trip.FuelCostCalculator
+import com.example.bgps.location.FuelSettingsStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,10 +21,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
+// Tiền xăng ƯỚC TÍNH (theo quãng đường các hành trình có chọn xe) và tiền
+// xăng ĐÃ CHI THẬT (tổng giao dịch danh mục "Xăng xe") trong kỳ đang xem —
+// cố tình tách 2 số, không cộng dồn, để người dùng tự so sánh thay vì có
+// nguy cơ bị tính trùng khi đã bấm "Ghi thành chi tiêu" ở màn hành trình.
+data class FuelComparison(val estimatedVnd: Long, val actualVnd: Long)
+
 @HiltViewModel
 class SummaryViewModel @Inject constructor(
     repository: TransactionRepository,
-    budgetRepository: BudgetRepository
+    budgetRepository: BudgetRepository,
+    tripRepository: TripRepository,
+    fuelSettingsStore: FuelSettingsStore
 ) : ViewModel() {
 
     private val _period = MutableStateFlow(SummaryPeriod.MONTH)
@@ -43,6 +56,38 @@ class SummaryViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SpendingSummary(0L, 0L, emptyList())
+        )
+
+    val fuelComparison: StateFlow<FuelComparison> =
+        combine(
+            tripRepository.observeTrips(),
+            repository.observeTransactions(),
+            fuelSettingsStore.settings,
+            _period
+        ) { trips, transactions, fuelSettings, period ->
+            val from = SummaryCalculator.periodStart(period)
+
+            val estimated = FuelCostCalculator.totalEstimateVnd(
+                trips = trips.filter { it.startTime >= from },
+                motorbikeLitersPer100Km = fuelSettings.motorbikeLitersPer100Km,
+                carLitersPer100Km = fuelSettings.carLitersPer100Km,
+                pricePerLiterVnd = fuelSettings.pricePerLiterVnd
+            )
+
+            val actual = transactions
+                .filter {
+                    !it.isDeleted &&
+                        it.type == TransactionType.EXPENSE &&
+                        it.category.equals(DefaultCategories.FUEL_CATEGORY_NAME, ignoreCase = true) &&
+                        it.timestamp >= from
+                }
+                .sumOf { it.amount }
+
+            FuelComparison(estimated, actual)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = FuelComparison(0L, 0L)
         )
 
     fun setPeriod(period: SummaryPeriod) {

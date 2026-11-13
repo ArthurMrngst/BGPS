@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -39,6 +41,7 @@ fun TripDetailScreen(
     val points by viewModel.points.collectAsState()
     val loaded by viewModel.loaded.collectAsState()
     val fuelSettings by viewModel.fuelSettings.collectAsState()
+    val recordState by viewModel.recordFuelExpenseState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -95,6 +98,16 @@ fun TripDetailScreen(
                                 "~${currencyFormatter.format(cost)}đ tiền xăng (ước tính)",
                                 style = MaterialTheme.typography.bodyMedium
                             )
+                            when (recordState) {
+                                RecordFuelExpenseState.Recorded -> Text(
+                                    "Đã ghi vào Giao dịch (danh mục \"Xăng xe\").",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                else -> Button(
+                                    onClick = { viewModel.recordFuelExpense() },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) { Text("Ghi thành chi tiêu") }
+                            }
                         }
                         if (geoPoints.isEmpty()) {
                             Text(
@@ -106,5 +119,21 @@ fun TripDetailScreen(
                 }
             }
         }
+    }
+
+    if (recordState == RecordFuelExpenseState.DuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissRecordFuelExpenseState,
+            title = { Text("Đã có khoản xăng gần đây") },
+            text = {
+                Text("Bạn đã có một giao dịch \"Xăng xe\" gần thời điểm hành trình này rồi. Vẫn ghi thêm?")
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.recordFuelExpense(force = true) }) { Text("Vẫn ghi") }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissRecordFuelExpenseState) { Text("Huỷ") }
+            }
+        )
     }
 }

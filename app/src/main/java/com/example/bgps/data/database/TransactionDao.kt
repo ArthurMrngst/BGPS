@@ -61,4 +61,18 @@ interface TransactionDao {
     // bình thường để còn đồng bộ lên server sau này.
     @Query("UPDATE transactions SET category = :newCategory, isDirty = 1, updatedAt = :now WHERE category = :oldCategory")
     suspend fun renameCategory(oldCategory: String, newCategory: String, now: Long)
+
+    // Chống ghi trùng khoản xăng khi bấm "Ghi thành chi tiêu" ở màn chi tiết
+    // hành trình (xem TransactionRepository.findRecentFuelExpense) — tìm một
+    // giao dịch bất kỳ cùng danh mục trong khoảng thời gian quanh lúc kết
+    // thúc hành trình, không giới hạn nguồn (có thể người dùng đã tự nhập
+    // tay khoản xăng đó trước khi bấm nút này).
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE isDeleted = 0 AND category = :category AND timestamp BETWEEN :minTimestamp AND :maxTimestamp
+        LIMIT 1
+        """
+    )
+    suspend fun findRecentByCategory(category: String, minTimestamp: Long, maxTimestamp: Long): TransactionEntity?
 }

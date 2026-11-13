@@ -35,6 +35,17 @@ class TransactionRepository @Inject constructor(
         maxTimestamp = timestamp + DUPLICATE_WINDOW_MILLIS
     )
 
+    // Dùng trước khi bấm "Ghi thành chi tiêu" ở màn chi tiết hành trình —
+    // nếu đã có một giao dịch cùng danh mục quanh thời điểm hành trình kết
+    // thúc (vd. người dùng tự nhập tay khoản xăng đó rồi), cảnh báo trước
+    // khi ghi thêm để tránh tính trùng.
+    suspend fun findRecentFuelExpense(category: String, timestamp: Long): TransactionEntity? =
+        dao.findRecentByCategory(
+            category = category,
+            minTimestamp = timestamp - FUEL_DEDUP_WINDOW_MILLIS,
+            maxTimestamp = timestamp + FUEL_DEDUP_WINDOW_MILLIS
+        )
+
     // Dùng cho cả thêm mới và sửa. Repository tự gắn updatedAt/isDirty
     // để phía UI không thể quên.
     suspend fun save(transaction: TransactionEntity) {
@@ -55,5 +66,10 @@ class TransactionRepository @Inject constructor(
 
     companion object {
         private const val DUPLICATE_WINDOW_MILLIS = 2 * 60 * 1000L
+
+        // Rộng hơn DUPLICATE_WINDOW_MILLIS vì đây là so với lúc người dùng tự
+        // bấm nút (có thể trễ vài giờ so với lúc mua xăng thật), không phải
+        // so giữa 2 thông báo hệ thống bắn gần như cùng lúc.
+        private const val FUEL_DEDUP_WINDOW_MILLIS = 3 * 60 * 60 * 1000L
     }
 }

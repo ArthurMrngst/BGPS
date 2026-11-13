@@ -1,6 +1,8 @@
 package com.example.bgps.domain.trip
 
 import com.example.bgps.data.database.FuelVehicleType
+import com.example.bgps.data.database.TripEntity
+import com.example.bgps.data.database.VehicleType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -46,5 +48,31 @@ class FuelCostCalculatorTest {
         )
 
         assertEquals(21_000L, cost)
+    }
+
+    private fun trip(distanceMeters: Double, fuelVehicleType: FuelVehicleType?) = TripEntity(
+        startTime = 0L,
+        endTime = 1_000L,
+        distanceMeters = distanceMeters,
+        vehicleType = VehicleType.VEHICLE,
+        fuelVehicleType = fuelVehicleType
+    )
+
+    @Test
+    fun `totalEstimateVnd sums only trips that have a fuel vehicle chosen`() {
+        val trips = listOf(
+            trip(100_000.0, FuelVehicleType.MOTORBIKE), // 43,050đ
+            trip(100_000.0, FuelVehicleType.CAR),        // 143,500đ
+            trip(50_000.0, null)                         // bỏ qua, không chọn xe
+        )
+
+        val total = FuelCostCalculator.totalEstimateVnd(trips)
+
+        assertEquals(186_550L, total)
+    }
+
+    @Test
+    fun `totalEstimateVnd is zero for an empty list`() {
+        assertEquals(0L, FuelCostCalculator.totalEstimateVnd(emptyList()))
     }
 }

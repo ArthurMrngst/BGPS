@@ -59,9 +59,7 @@ fun TransactionListScreen(
     onEditTransaction: (String) -> Unit = {},
     onOpenNotificationAccess: () -> Unit = {},
     onOpenTrips: () -> Unit = {},
-    onOpenSpendingMap: () -> Unit = {},
     onOpenCategoryManage: () -> Unit = {},
-    onOpenAccount: () -> Unit = {},
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.filteredTransactions.collectAsState()
@@ -93,9 +91,7 @@ fun TransactionListScreen(
                         Text(if (filter.isActive) "Lọc (đang bật)" else "Lọc")
                     }
                     TextButton(onClick = onOpenCategoryManage) { Text("Danh mục") }
-                    TextButton(onClick = onOpenSpendingMap) { Text("Bản đồ") }
                     TextButton(onClick = onOpenTrips) { Text("Hành trình") }
-                    TextButton(onClick = onOpenAccount) { Text("Tài khoản") }
                 }
             )
         }

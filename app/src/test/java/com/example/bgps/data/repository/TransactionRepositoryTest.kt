@@ -148,4 +148,61 @@ class TransactionRepositoryTest {
 
         assertNull(duplicate)
     }
+
+    @Test
+    fun `finds a recent fuel expense within the dedup window`() = runTest {
+        repository.save(
+            TransactionEntity(
+                amount = 50_000L,
+                type = TransactionType.EXPENSE,
+                category = "Xăng xe",
+                source = TransactionSource.MANUAL,
+                timestamp = 1_000_000L
+            )
+        )
+
+        val found = repository.findRecentFuelExpense(
+            category = "Xăng xe",
+            timestamp = 1_000_000L + 60 * 60 * 1000L // 1 giờ sau, trong cửa sổ 3 giờ
+        )
+
+        assertEquals(50_000L, found?.amount)
+    }
+
+    @Test
+    fun `does not flag a fuel expense far outside the dedup window`() = runTest {
+        repository.save(
+            TransactionEntity(
+                amount = 50_000L,
+                type = TransactionType.EXPENSE,
+                category = "Xăng xe",
+                source = TransactionSource.MANUAL,
+                timestamp = 1_000_000L
+            )
+        )
+
+        val found = repository.findRecentFuelExpense(
+            category = "Xăng xe",
+            timestamp = 1_000_000L + 10 * 60 * 60 * 1000L // 10 giờ sau, ngoài cửa sổ
+        )
+
+        assertNull(found)
+    }
+
+    @Test
+    fun `does not flag a different category as a fuel expense`() = runTest {
+        repository.save(
+            TransactionEntity(
+                amount = 50_000L,
+                type = TransactionType.EXPENSE,
+                category = "Ăn uống",
+                source = TransactionSource.MANUAL,
+                timestamp = 1_000_000L
+            )
+        )
+
+        val found = repository.findRecentFuelExpense(category = "Xăng xe", timestamp = 1_000_000L)
+
+        assertNull(found)
+    }
 }

@@ -46,6 +46,7 @@ fun SummaryScreen(
 ) {
     val summary by viewModel.summary.collectAsState()
     val period by viewModel.period.collectAsState()
+    val fuelComparison by viewModel.fuelComparison.collectAsState()
 
     Scaffold(
         topBar = {
@@ -65,6 +66,9 @@ fun SummaryScreen(
             item { PeriodTabs(selected = period, onSelect = viewModel::setPeriod) }
             item { NetBalanceCard(summary) }
             item { IncomeExpenseChart(income = summary.totalIncome, expense = summary.totalExpense) }
+            if (fuelComparison.estimatedVnd > 0 || fuelComparison.actualVnd > 0) {
+                item { FuelComparisonCard(fuelComparison) }
+            }
             if (summary.byCategory.isEmpty()) {
                 item { Text("Chưa có chi tiêu trong kỳ này") }
             } else {
@@ -128,6 +132,21 @@ private fun NetBalanceCard(summary: SpendingSummary) {
                     )
                 }
             }
+        }
+    }
+}
+
+// Cố tình hiện 2 số CẠNH NHAU, không cộng dồn vào tổng chi — ước tính theo
+// quãng đường là "lẽ ra phải tốn", còn thực chi (danh mục "Xăng xe") là tiền
+// thật đã ghi nhận; trộn chung dễ tính trùng nếu người dùng đã bấm "Ghi
+// thành chi tiêu" ở màn hành trình (xem TripDetailScreen).
+@Composable
+private fun FuelComparisonCard(comparison: FuelComparison) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Tiền xăng", style = MaterialTheme.typography.labelLarge)
+            Text("Ước tính theo quãng đường: ${formatVnd(comparison.estimatedVnd)}")
+            Text("Đã chi thực tế (danh mục \"Xăng xe\"): ${formatVnd(comparison.actualVnd)}")
         }
     }
 }

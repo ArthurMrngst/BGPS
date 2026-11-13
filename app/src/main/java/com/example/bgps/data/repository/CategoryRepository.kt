@@ -6,6 +6,7 @@ import com.example.bgps.data.database.CategoryEntity
 import com.example.bgps.data.database.TransactionDao
 import com.example.bgps.domain.DefaultCategories
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,12 +18,16 @@ class CategoryRepository @Inject constructor(
 ) {
     fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
 
-    // Gọi từ BGpsApplication.onCreate — chèn 11 danh mục mặc định nếu bảng
-    // đang trống (cài mới HOẶC vừa nâng cấp DB qua MIGRATION_6_7, bảng đó
-    // tạo ra trống không có sẵn dữ liệu).
+    // Gọi từ BGpsApplication.onCreate — chèn các danh mục mặc định còn THIẾU
+    // (so theo tên, không phải theo đếm số dòng) để: cài mới/nâng cấp DB qua
+    // MIGRATION_6_7 có đủ danh mục ngay; VÀ nếu sau này thêm danh mục mặc
+    // định mới vào DefaultCategories.seed() (như "Xăng xe"), người đã cài từ
+    // trước cũng tự được bổ sung, không cần xoá app cài lại.
     suspend fun ensureSeeded() {
-        if (categoryDao.count() == 0) {
-            categoryDao.upsertAll(DefaultCategories.seed())
+        val existingNames = categoryDao.observeAll().first().map { it.displayName }.toSet()
+        val missing = DefaultCategories.seed().filter { it.displayName !in existingNames }
+        if (missing.isNotEmpty()) {
+            categoryDao.upsertAll(missing)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.bgps.di
 
+import android.os.Build
 import com.example.bgps.auth.AuthTokenStore
 import com.example.bgps.data.network.AuthApi
 import com.example.bgps.data.network.SyncApi
@@ -16,9 +17,23 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // Backend chạy local trên máy tính — điện thoại gọi được qua
-    // `adb reverse tcp:3000 tcp:3000` (xem README của repo backend).
-    private const val BASE_URL = "http://localhost:3000/"
+    // Backend chạy local trên máy tính.
+    //   - Máy thật: gọi qua `adb reverse tcp:3000 tcp:3000` tới localhost.
+    //   - Emulator: 10.0.2.2 là địa chỉ đặc biệt trỏ thẳng về localhost của
+    //     máy tính, KHÔNG cần adb reverse — adb reverse trên emulator hay
+    //     bị lỗi "unexpected end of stream" (đã gặp thật khi test), nên emulator
+    //     luôn ưu tiên 10.0.2.2.
+    private val BASE_URL = if (isEmulator()) "http://10.0.2.2:3000/" else "http://localhost:3000/"
+
+    private fun isEmulator(): Boolean =
+        Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for x86") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
+            Build.PRODUCT.contains("sdk")
 
     @Provides
     @Singleton

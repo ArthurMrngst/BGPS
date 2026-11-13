@@ -60,7 +60,7 @@ object Routes {
 
 // Các tab có thanh điều hướng dưới; Sửa giao dịch và Cấp quyền thông báo là
 // màn được "push" lên trên nên không hiện thanh dưới.
-private val BOTTOM_BAR_ROUTES = setOf(Routes.TRANSACTIONS, Routes.SUMMARY)
+private val BOTTOM_BAR_ROUTES = setOf(Routes.TRANSACTIONS, Routes.SPENDING_MAP, Routes.SUMMARY, Routes.ACCOUNT)
 
 @Composable
 fun AppNavHost() {
@@ -84,8 +84,22 @@ fun AppNavHost() {
                             restoreState = true
                         }
                     },
+                    onNavigateSpendingMap = {
+                        navController.navigate(Routes.SPENDING_MAP) {
+                            popUpTo(Routes.TRANSACTIONS) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onNavigateSummary = {
                         navController.navigate(Routes.SUMMARY) {
+                            popUpTo(Routes.TRANSACTIONS) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateAccount = {
+                        navController.navigate(Routes.ACCOUNT) {
                             popUpTo(Routes.TRANSACTIONS) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -106,19 +120,17 @@ fun AppNavHost() {
                     onEditTransaction = { id -> navController.navigate(Routes.editTransaction(id)) },
                     onOpenNotificationAccess = { navController.navigate(Routes.NOTIFICATION_ACCESS) },
                     onOpenTrips = { navController.navigate(Routes.TRIPS) },
-                    onOpenSpendingMap = { navController.navigate(Routes.SPENDING_MAP) },
-                    onOpenCategoryManage = { navController.navigate(Routes.CATEGORY_MANAGE) },
-                    onOpenAccount = { navController.navigate(Routes.ACCOUNT) }
+                    onOpenCategoryManage = { navController.navigate(Routes.CATEGORY_MANAGE) }
                 )
             }
             composable(Routes.SPENDING_MAP) {
-                SpendingMapScreen(onBack = { navController.popBackStack() })
+                SpendingMapScreen()
             }
             composable(Routes.CATEGORY_MANAGE) {
                 CategoryManageScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.ACCOUNT) {
-                AccountScreen(onBack = { navController.popBackStack() })
+                AccountScreen()
             }
             composable(Routes.SUMMARY) {
                 SummaryScreen(onOpenBudget = { navController.navigate(Routes.BUDGET) })

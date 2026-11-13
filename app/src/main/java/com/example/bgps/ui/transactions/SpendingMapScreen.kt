@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,18 +31,12 @@ private val DEFAULT_CENTER = GeoPoint(21.0285, 105.8542)
 // đâu, không phải đã di chuyển qua đâu.
 @Composable
 fun SpendingMapScreen(
-    onBack: () -> Unit,
     viewModel: SpendingMapViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.locatedTransactions.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Bản đồ chi tiêu") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Quay lại") } }
-            )
-        }
+        topBar = { TopAppBar(title = { Text("Bản đồ chi tiêu") }) }
     ) { innerPadding ->
         if (transactions.isEmpty()) {
             Box(

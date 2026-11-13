@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.FloatingActionButton
@@ -19,14 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.bgps.ui.theme.MoneyGreenDark
 
-// Kiểu Money Lover: thanh điều hướng dưới với nút "+" tròn nổi lên ở giữa thay
-// vì là một tab bình thường. Chỉ 2 tab có thật trong app (Giao dịch, Tổng hợp);
-// không thêm tab giả cho tính năng chưa làm.
+// Kiểu Money Lover: thanh điều hướng dưới với nút "+" tròn nổi lên ở giữa —
+// 2 tab bên trái (Giao dịch, Bản đồ), 2 tab bên phải (Tổng hợp, Tài khoản).
 @Composable
 fun BGpsBottomBar(
     currentRoute: String?,
     onNavigateTransactions: () -> Unit,
+    onNavigateSpendingMap: () -> Unit,
     onNavigateSummary: () -> Unit,
+    onNavigateAccount: () -> Unit,
     onAddClick: () -> Unit
 ) {
     Box {
@@ -36,6 +39,16 @@ fun BGpsBottomBar(
                 onClick = onNavigateTransactions,
                 icon = { Icon(Icons.Filled.Receipt, contentDescription = null) },
                 label = { Text("Giao dịch") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MoneyGreenDark,
+                    selectedTextColor = MoneyGreenDark
+                )
+            )
+            NavigationBarItem(
+                selected = currentRoute == Routes.SPENDING_MAP,
+                onClick = onNavigateSpendingMap,
+                icon = { Icon(Icons.Filled.Map, contentDescription = null) },
+                label = { Text("Bản đồ") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MoneyGreenDark,
                     selectedTextColor = MoneyGreenDark
@@ -54,6 +67,16 @@ fun BGpsBottomBar(
                 onClick = onNavigateSummary,
                 icon = { Icon(Icons.Filled.PieChart, contentDescription = null) },
                 label = { Text("Tổng hợp") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MoneyGreenDark,
+                    selectedTextColor = MoneyGreenDark
+                )
+            )
+            NavigationBarItem(
+                selected = currentRoute == Routes.ACCOUNT,
+                onClick = onNavigateAccount,
+                icon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) },
+                label = { Text("Tài khoản") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MoneyGreenDark,
                     selectedTextColor = MoneyGreenDark

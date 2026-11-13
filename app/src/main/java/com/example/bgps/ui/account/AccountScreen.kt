@@ -37,19 +37,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 // bình thường với dữ liệu cục bộ trên máy (chế độ khách, mặc định của app).
 @Composable
 fun AccountScreen(
-    onBack: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel()
 ) {
     val loggedInEmail by viewModel.loggedInEmail.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Tài khoản") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Quay lại") } }
-            )
-        }
+        topBar = { TopAppBar(title = { Text("Tài khoản") }) }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)) {
             if (loggedInEmail != null) {
